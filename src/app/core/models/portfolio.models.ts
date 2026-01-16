@@ -32,6 +32,8 @@ export interface Profile {
   email: string;
   github: string;
   linkedin: string;
+  devto?: string;
+  blog?: string;
   location: string;
   avatarUrl?: string;
   stats: Stat[];

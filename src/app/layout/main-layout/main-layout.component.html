@@ -6,9 +6,11 @@
     <div class="layout-container">
       <div class="bg-grid"></div>
       <div class="mobile-header">
-        <div class="term-logo">
-           <span class="prefix">USER:</span> {{ (profile$ | async)?.name | uppercase }}
+        <div class="header-status">
+            <span class="status-indicator access"></span>
+            <span>ACCESS: GRANTED</span>
         </div>
+        
         <button class="tech-hamburger" (click)="toggleMenu()" [class.active]="isMenuOpen">
           <span class="line line-1"></span>
           <span class="line line-2"></span>
@@ -51,6 +53,26 @@
       </aside>
 
       <main class="content-viewport" (click)="closeMenu()" [class.scroll-locked]="isMenuOpen">
+        @if (visitorInfo) {
+        <div class="visitor-hud">
+          <div class="hud-item">
+            <img src="assets/images/profile-avatar-origin.svg" alt="User Avatar" class="hud-avatar">
+            <span class="hud-label">USER:</span> UNKNOWN
+          </div>
+          <div class="hud-item">
+            <span class="status-indicator access"></span>
+            <span class="hud-label">ACCESS:</span> GRANTED
+          </div>
+          <div class="hud-item optional-mobile">
+            <span class="hud-label">LOC:</span> {{ visitorInfo.location }}
+          </div>
+          <div class="hud-item optional-mobile">
+            <span class="hud-label">SYS:</span> {{ visitorInfo.os }}
+          </div>
+          <div class="hud-scan-line"></div>
+        </div>
+        }
+
         <div class="content-frame">
           <div class="frame-corner top-left"></div>
           <div class="frame-corner top-right"></div>

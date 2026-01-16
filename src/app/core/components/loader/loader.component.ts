@@ -1,6 +1,6 @@
 import { Component, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { interval, map, take, startWith, tap } from 'rxjs';
+import { interval, map, takeWhile, startWith, tap } from 'rxjs';
 
 @Component({
   selector: 'app-loader',
@@ -12,17 +12,22 @@ import { interval, map, take, startWith, tap } from 'rxjs';
 export class LoaderComponent {
   @Output() complete = new EventEmitter<void>();
 
-  private steps = [
-    { p: 20, t: 'LOADING CORE MODULES...' },
-    { p: 45, t: 'ESTABLISHING SECURE CONNECTION...' },
-    { p: 70, t: 'RETRIEVING ARCHIVES...' },
-    { p: 90, t: 'DECRYPTING DATA...' },
-    { p: 100, t: 'SYSTEM READY' }
-  ];
+  private getLoadingText(progress: number): string {
+    if (progress < 20) return 'INITIALIZING SYSTEM...';
+    if (progress < 45) return 'LOADING CORE MODULES...';
+    if (progress < 70) return 'ESTABLISHING SECURE CONNECTION...';
+    if (progress < 90) return 'RETRIEVING ARCHIVES...';
+    if (progress < 100) return 'DECRYPTING DATA...';
+    return 'SYSTEM READY';
+  }
 
-  loadingState$ = interval(600).pipe(
-    take(this.steps.length),
-    map(index => this.steps[index]),
+  loadingState$ = interval(20).pipe(
+    map(i => i + 1),
+    takeWhile(p => p <= 100),
+    map(p => ({
+      p: p,
+      t: this.getLoadingText(p)
+    })),
     startWith({ p: 0, t: 'INITIALIZING SYSTEM' }),
     tap({
       complete: () => {

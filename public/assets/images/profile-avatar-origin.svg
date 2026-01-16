@@ -29,10 +29,4 @@
   <rect x="90" y="175" width="20" height="5" fill="#00f3ff" opacity="0.8" />
   <path d="M20 55 L40 65" stroke="#00f3ff" stroke-width="1" />
   <path d="M180 55 L160 65" stroke="#00f3ff" stroke-width="1" />
-  
-  <!-- Scanning Line Animation -->
-  <rect x="20" y="55" width="160" height="2" fill="#00f3ff" opacity="0.2">
-    <animate attributeName="y" values="55;145;55" dur="3s" repeatCount="indefinite" />
-     <animate attributeName="opacity" values="0.2;0.5;0.2" dur="3s" repeatCount="indefinite" />
-  </rect>
 </svg>

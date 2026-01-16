@@ -44,6 +44,20 @@
                 <a [href]="profile.linkedin" target="_blank" class="link">{{ profile.linkedin }}</a>
             </div>
 
+            @if (profile.devto) {
+            <div class="info-item">
+                <label>Dev.to Frequency</label>
+                <a [href]="profile.devto" target="_blank" class="link">{{ profile.devto }}</a>
+            </div>
+            }
+
+            @if (profile.blog) {
+            <div class="info-item">
+                <label>Personal Blog</label>
+                <a [href]="profile.blog" target="_blank" class="link">{{ profile.blog }}</a>
+            </div>
+            }
+
             <div class="info-item">
                 <label>Current Vector</label>
                 <p class="link">{{ profile.location }}</p>

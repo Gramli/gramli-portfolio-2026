@@ -8,6 +8,8 @@
     "email": "contact@gramli.dev",
     "github": "https://github.com/gramli",
     "linkedin": "https://linkedin.com/in/gramli",
+    "devto": "https://dev.to/gramli",
+    "blog": "https://blog.gramli.dev",
     "location": "Digital Space",
     "avatarUrl": "assets/images/profile-avatar.svg",
     "stats": [
@@ -42,6 +44,17 @@
     },
     {
       "id": "3",
+      "title": "Droid Command Center",
+      "description": "Fleet management interface for autonomous units.",
+      "problemStatement": "Operators lacked a unified view of deployed units.",
+      "solution": "SPA with complex state management using NgRx.",
+      "technologies": ["Angular", "NgRx", "TypeScript", "RxJS", "Material"],
+      "role": "Frontend Lead",
+      "status": "archived",
+      "sourceUrl": "https://github.com/gramli/droid-cmd"
+    },
+    {
+      "id": "4",
       "title": "Droid Command Center",
       "description": "Fleet management interface for autonomous units.",
       "problemStatement": "Operators lacked a unified view of deployed units.",
