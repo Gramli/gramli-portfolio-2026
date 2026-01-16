@@ -69,6 +69,15 @@
       margin-bottom: 0.5rem;
       color: var(--color-text-main);
       text-transform: uppercase;
+      word-wrap: break-word; /* Ensure valid break strategy */
+      
+      @media (max-width: 768px) {
+        font-size: 2.5rem; /* Reduced for mobile */
+      }
+      
+      @media (max-width: 400px) {
+        font-size: 2rem; /* Reduced further for small mobile */
+      }
     }
 
     .role-subtitle {

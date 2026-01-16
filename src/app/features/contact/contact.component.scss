@@ -14,11 +14,20 @@
         display: grid;
         grid-template-columns: 2fr 1fr;
         gap: 3rem;
+        
+        @media (max-width: 768px) {
+            grid-template-columns: 1fr;
+            gap: 2rem;
+        }
     }
 
     .form-panel {
         padding: 2rem;
         background: rgba(2, 16, 37, 0.6);
+        
+        @media (max-width: 480px) {
+            padding: 1rem;
+        }
     }
 
     .instruction {

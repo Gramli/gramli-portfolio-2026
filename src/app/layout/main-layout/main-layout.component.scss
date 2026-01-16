@@ -202,10 +202,12 @@
       padding: 2rem;
       overflow-y: auto;
       position: relative;
+      display: flex;
+      flex-direction: column;
     }
 
     .content-frame {
-      min-height: 100%;
+      flex: 1;
       border: 1px solid rgba(0, 243, 255, 0.1);
       padding: 2rem;
       position: relative;
@@ -315,10 +317,14 @@
       }
 
       .content-viewport {
-        padding: 1rem; /* Reset padding, no need for top offset if header is relative */
+        padding: 0.5rem; /* Reduced padding for mobile */
         margin-top: 0;
         height: 100%; /* Take remaining space */
         overflow-y: auto;
+      }
+      
+      .content-frame {
+        padding: 1rem; /* Reduced frame padding for mobile */
       }
 
       .content-viewport.scroll-locked {
