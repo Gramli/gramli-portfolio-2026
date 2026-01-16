@@ -1,0 +1,1 @@
+in right upper corner i would like to add icon of interactive terminal , when user click on this terminal it will open a modal with same theme as portfolio, this terminal will work as windows console, it will support
