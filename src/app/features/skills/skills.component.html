@@ -1,0 +1,22 @@
+    <div class="skills-container">
+      <h2 class="page-title text-header glow-text">Technical Schematics</h2>
+      
+      @if (skills$ | async; as categories) {
+      <div class="skills-grid">
+        @for (cat of categories; track cat.name) {
+        <div class="category-panel tech-border">
+          <h3 class="category-header">
+             <span class="decor">//</span> {{ cat.name }}
+          </h3>
+          <ul class="skill-list">
+             @for (skill of cat.skills; track skill) {
+             <li class="skill-item">
+                <span class="bullet">></span> {{ skill }}
+             </li>
+             }
+          </ul>
+        </div>
+        }
+      </div>
+      }
+    </div>

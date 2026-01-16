@@ -1,0 +1,37 @@
+@if (profile$ | async; as profile) {
+    <div class="home-container">
+      <div class="profile-layout">
+        <div class="avatar-section">
+           <div class="avatar-frame tech-border">
+             <img src="assets/images/profile-photo.png" alt="Profile Logic" class="profile-photo-bg">
+             <img [src]="profile.avatarUrl" alt="System Architect" class="profile-avatar-fg">
+             <div class="scan-line"></div>
+           </div>
+        </div>
+
+        <div class="intro-section">
+          <h2 class="section-label">Identity Confirmed</h2>
+          <h1 class="glow-text main-title">{{ profile.name }}</h1>
+          <h3 class="role-subtitle">{{ profile.role }}</h3>
+        </div>
+      </div>
+          
+      <div class="bio-panel tech-border">
+        <p class="long-bio">{{ profile.longBio }}</p>
+      </div>
+
+      <div class="philosophy-panel tech-border">
+          <h4 class="mini-header">Core Directive / Philosophy</h4>
+          <p>{{ profile.philosophy }}</p>
+      </div>
+
+      <div class="stats-grid">
+         @for (stat of profile.stats; track stat.label) {
+         <div class="stat-box">
+             <span class="stat-number">{{ stat.value }}</span>
+             <span class="stat-label">{{ stat.label }}</span>
+         </div>
+         }
+      </div>
+    </div>
+}

@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <defs>
+    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="1.5" result="blur"/>
+      <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+    </filter>
+  </defs>
+  
+  <!-- Hexagon Background -->
+  <path d="M32 4 L58 19 V45 L32 60 L6 45 V19 Z" 
+        fill="#021025" 
+        stroke="#00f3ff" 
+        stroke-width="2" />
+
+  <!-- Terminal Prompt Symbol (>_) -->
+  <g filter="url(#glow)" stroke="#00f3ff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" fill="none">
+    <!-- Bracket > -->
+    <path d="M20 22 L32 32 L20 42" />
+    <!-- Cursor _ -->
+    <path d="M36 42 L48 42">
+       <animate attributeName="opacity" values="1;0;1" dur="1s" repeatCount="indefinite" />
+    </path>
+  </g>
+</svg>

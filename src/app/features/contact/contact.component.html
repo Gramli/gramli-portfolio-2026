@@ -1,0 +1,54 @@
+@if (profile$ | async; as profile) {
+    <div class="contact-container">
+      <h2 class="page-title text-header glow-text">Secure Comm Link</h2>
+
+      <div class="contact-layout">
+        <div class="form-panel tech-border">
+          <p class="instruction">Enter message parameters below to initiate transmission.</p>
+          
+          <form class="tech-form" (ngSubmit)="onSubmit()">
+            <div class="form-group">
+              <label>ID / Name</label>
+              <input type="text" name="name" [(ngModel)]="formData.name" placeholder="Enter identification..." required>
+            </div>
+            
+            <div class="form-group">
+              <label>Reply Vector / Email</label>
+              <input type="email" name="email" [(ngModel)]="formData.email" placeholder="Enter contact coordinates..." required>
+            </div>
+
+            <div class="form-group">
+              <label>Payload / Message</label>
+              <textarea rows="5" name="message" [(ngModel)]="formData.message" placeholder="Enter transmission content..." required></textarea>
+            </div>
+
+            <button type="submit" class="btn-submit">
+               TRANSMIT SEQUENCE
+            </button>
+          </form>
+        </div>
+
+        <div class="info-panel">
+            <div class="info-item">
+                <label>Direct Link</label>
+                <a [href]="'mailto:' + profile.email" class="link">{{ profile.email }}</a>
+            </div>
+            
+            <div class="info-item">
+                <label>GitHub Frequency</label>
+                <a [href]="profile.github" target="_blank" class="link">{{ profile.github }}</a>
+            </div>
+
+            <div class="info-item">
+                <label>LinkedIn Frequency</label>
+                <a [href]="profile.linkedin" target="_blank" class="link">{{ profile.linkedin }}</a>
+            </div>
+
+            <div class="info-item">
+                <label>Current Vector</label>
+                <p class="link">{{ profile.location }}</p>
+            </div>
+        </div>
+      </div>
+    </div>
+}

@@ -1,1 +1,86 @@
-/* You can add global styles to this file, and also import other style files */
+
+:root {
+  /* -- Jedi Archives Palette -- */
+  --color-void: #00050d;         /* Darker than navy for background depth */
+  --color-navy: #021025;         /* Primary Background */
+  --color-navy-light: #052652;   /* Secondary Background */
+  
+  --color-cyan-dim: #00acc1;     /* Inactive/Subtle */
+  --color-cyan: #00bcd4;         /* Primary Text/Accent */
+  --color-cyan-bright: #00f3ff;  /* Glows/Highlights */
+  
+  --color-text-main: #e0f7fa;    /* Off-white cyan tint for readability */
+  --color-text-muted: #819ca9;
+  
+  --color-alert: #ffb300;        /* Warning/Attention for "System Alerts" */
+
+  /* -- Typography -- */
+  --font-header: 'Michroma', sans-serif;
+  --font-body: 'Lato', sans-serif;
+
+  /* -- Effects -- */
+  --glow-subtle: 0 0 10px rgba(0, 243, 255, 0.2);
+  --glow-strong: 0 0 20px rgba(0, 243, 255, 0.6);
+  --border-tech: 1px solid rgba(0, 243, 255, 0.3);
+  --glass-panel: rgba(2, 16, 37, 0.85);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background-color: var(--color-void);
+  color: var(--color-text-main);
+  font-family: var(--font-body);
+  line-height: 1.6;
+  overflow-x: hidden;
+  height: 100vh;
+}
+
+/* Scrollbar specific to the theme */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: var(--color-void);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-navy-light);
+  border: 1px solid var(--color-cyan-dim);
+}
+
+/* -- Utility Classes -- */
+.text-header {
+  font-family: var(--font-header);
+  text-transform: uppercase;
+  letter-spacing: 2px;
+}
+
+.glow-text {
+  text-shadow: var(--glow-subtle);
+}
+
+.tech-border {
+  border: var(--border-tech);
+  position: relative;
+  
+  /* Corner accents (illusion using pseudo-elements) could be added here in a component */
+}
+
+/* Background Grid Effect */
+.bg-grid {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: -1;
+  background-image: 
+    linear-gradient(rgba(0, 243, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 243, 255, 0.03) 1px, transparent 1px);
+  background-size: 40px 40px;
+  pointer-events: none;
+}

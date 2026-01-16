@@ -1,0 +1,49 @@
+    <div class="projects-container">
+      <h2 class="page-title text-header glow-text">Active Deployments</h2>
+      
+      @if (projects$ | async; as projects) {
+      <div class="projects-grid">
+        @for (project of projects; track project.id) {
+        <div class="project-card tech-border">
+           <div class="card-header">
+             <h3 class="project-title">{{ project.title }}</h3>
+             <span class="status-badge" [ngClass]="project.status">{{ project.status }}</span>
+           </div>
+           
+           <div class="card-body">
+             <p class="description">{{ project.description }}</p>
+             
+             <div class="detail-section">
+               <label>Problem:</label>
+               <p>{{ project.problemStatement }}</p>
+             </div>
+             
+             <div class="detail-section">
+               <label>Solution:</label>
+               <p>{{ project.solution }}</p>
+             </div>
+
+             <div class="tech-stack">
+               @for (tech of project.technologies; track tech) {
+               <span class="tech-tag">{{ tech }}</span>
+               }
+             </div>
+           </div>
+
+           <div class="card-actions">
+             @if (project.sourceUrl) {
+             <a [href]="project.sourceUrl" target="_blank" class="btn-action">
+               <span class="bracket">[</span> SOURCE <span class="bracket">]</span>
+             </a>
+             }
+             @if (project.liveUrl) {
+             <a [href]="project.liveUrl" target="_blank" class="btn-action primary">
+               <span class="bracket">[</span> LAUNCH <span class="bracket">]</span>
+             </a>
+             }
+           </div>
+        </div>
+        }
+      </div>
+      }
+    </div>

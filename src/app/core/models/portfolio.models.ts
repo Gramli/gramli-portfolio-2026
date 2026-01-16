@@ -1,0 +1,38 @@
+export interface Project {
+  id: string;
+  title: string;
+  description: string;
+  problemStatement: string;
+  solution: string;
+  technologies: string[];
+  role: string;
+  liveUrl?: string;
+  sourceUrl?: string;
+  imageUrl?: string;
+  status: 'online' | 'offline' | 'archived' | 'in-development';
+}
+
+export interface SkillCategory {
+  name: string;
+  skills: string[];
+  icon?: string;
+}
+
+export interface Stat {
+  value: string;
+  label: string;
+}
+
+export interface Profile {
+  name: string;
+  role: string;
+  shortBio: string;
+  longBio: string;
+  philosophy: string;
+  email: string;
+  github: string;
+  linkedin: string;
+  location: string;
+  avatarUrl?: string;
+  stats: Stat[];
+}

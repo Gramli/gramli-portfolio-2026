@@ -1,0 +1,22 @@
+<div class="loader-overlay">
+    @if (loadingState$ | async; as state) {
+    <div class="loader-content">
+        <div class="scanner-container">
+            <div class="scanner-ring"></div>
+            <div class="scanner-core"></div>
+        </div>
+        
+        <div class="data-stream">
+            <div class="progress-bar-container tech-border">
+                <div class="progress-bar" [style.width.%]="state.p"></div>
+            </div>
+            
+            <p class="status-text glow-text">
+                <span class="prefix">>></span> {{ state.t }}
+            </p>
+            
+            <p class="percentage">{{ state.p }}%</p>
+        </div>
+    </div>
+    }
+</div>

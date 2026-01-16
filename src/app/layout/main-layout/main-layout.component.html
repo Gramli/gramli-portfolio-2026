@@ -1,0 +1,64 @@
+@if (isLoading) {
+  <app-loader (complete)="onLoaderComplete()"></app-loader>
+}
+
+@if (!isLoading) {
+    <div class="layout-container">
+      <div class="bg-grid"></div>
+      <div class="mobile-header">
+        <div class="term-logo">
+           <span class="prefix">USER:</span> {{ (profile$ | async)?.name | uppercase }}
+        </div>
+        <button class="tech-hamburger" (click)="toggleMenu()" [class.active]="isMenuOpen">
+          <span class="line line-1"></span>
+          <span class="line line-2"></span>
+          <span class="line line-3"></span>
+        </button>
+      </div>
+
+      <aside class="sidebar" [class.open]="isMenuOpen">
+        <div class="sidebar-header">
+          <h1 class="glow-text text-header">{{ (profile$ | async)?.name }}</h1>
+          <p class="subtitle">{{ (profile$ | async)?.role }}</p>
+        </div>
+
+        <nav class="nav-menu">
+          <a routerLink="/home" routerLinkActive="active" class="nav-item" (click)="closeMenu()">
+            <span class="icon">[01]</span> <span class="label">Overview</span>
+          </a>
+          <a routerLink="/projects" routerLinkActive="active" class="nav-item" (click)="closeMenu()">
+            <span class="icon">[02]</span> <span class="label">Deployments</span>
+          </a>
+          <a routerLink="/skills" routerLinkActive="active" class="nav-item" (click)="closeMenu()">
+            <span class="icon">[03]</span> <span class="label">Schematics</span>
+          </a>
+          <a routerLink="/contact" routerLinkActive="active" class="nav-item" (click)="closeMenu()">
+            <span class="icon">[04]</span> <span class="label">Comms</span>
+          </a>
+        </nav>
+
+        <div class="sidebar-icon">
+          <img src="assets/images/profile-icon.svg" alt="System" class="brand-icon">
+        </div>
+
+        <div class="sidebar-footer">
+          <div class="system-status">
+            <span class="status-indicator online"></span>
+            <span>SYSTEM: ONLINE</span>
+          </div>
+          <p class="version">v2026.1.0</p>
+        </div>
+      </aside>
+
+      <main class="content-viewport" (click)="closeMenu()" [class.scroll-locked]="isMenuOpen">
+        <div class="content-frame">
+          <div class="frame-corner top-left"></div>
+          <div class="frame-corner top-right"></div>
+          <div class="frame-corner bottom-left"></div>
+          <div class="frame-corner bottom-right"></div>
+          
+          <router-outlet></router-outlet>
+        </div>
+      </main>
+</div>
+}

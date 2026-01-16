@@ -1,0 +1,73 @@
+{
+  "profile": {
+    "name": "Gramli",
+    "role": "System Architect",
+    "shortBio": "Specializing in modern web applications using .NET Core and Angular.",
+    "longBio": "I am a Senior Software Engineer specializing in building modern web applications using .NET Core and Angular. I focus on solution architecture, design patterns, and SOLID principles to deliver applications that are maintainable, scalable, and easy to extend. My expertise spans backend development with C# and .NET Core, as well as frontend development with TypeScript and Angular.",
+    "philosophy": "As a software craftsman, I actively follow new trends and best practices. I place strong emphasis on code quality, testing, and optimal test coverage ensuring long-term reliability.",
+    "email": "contact@gramli.dev",
+    "github": "https://github.com/gramli",
+    "linkedin": "https://linkedin.com/in/gramli",
+    "location": "Digital Space",
+    "avatarUrl": "assets/images/profile-avatar.svg",
+    "stats": [
+      { "value": "10+", "label": "Years Exp." },
+      { "value": "100%", "label": "Code Quality" },
+      { "value": "24/7", "label": "Uptime" },
+      { "value": "24/7", "label": "Uptime" }
+    ]
+  },
+  "projects": [
+    {
+      "id": "1",
+      "title": "Nebula Enterprise CRP",
+      "description": "Cloud-native resource planning system for inter-galactic trade.",
+      "problemStatement": "Legacy systems were unable to handle the scale of multi-planetary transactions.",
+      "solution": "Microservices architecture using .NET 8 and Azure Kubernetes Service.",
+      "technologies": [".NET Core", "Angular", "Azure", "Docker", "Redis"],
+      "role": "Lead Architect",
+      "status": "online",
+      "sourceUrl": "https://github.com/gramli/nebula-erp"
+    },
+    {
+      "id": "2",
+      "title": "Quasar Analytics",
+      "description": "Real-time telemetry processing engine.",
+      "problemStatement": "Need for sub-millisecond data processing from thousands of IoT sensors.",
+      "solution": "Event-driven architecture utilizing Apache Kafka and SignalR.",
+      "technologies": ["C#", "SignalR", "Kafka", "React", "TimescaleDB"],
+      "role": "Senior Backend Engineer",
+      "status": "in-development",
+      "sourceUrl": "https://github.com/gramli/quasar"
+    },
+    {
+      "id": "3",
+      "title": "Droid Command Center",
+      "description": "Fleet management interface for autonomous units.",
+      "problemStatement": "Operators lacked a unified view of deployed units.",
+      "solution": "SPA with complex state management using NgRx.",
+      "technologies": ["Angular", "NgRx", "TypeScript", "RxJS", "Material"],
+      "role": "Frontend Lead",
+      "status": "archived",
+      "sourceUrl": "https://github.com/gramli/droid-cmd"
+    }
+  ],
+  "skills": [
+    {
+      "name": "Backend",
+      "skills": [".NET (Core)", "C#", "REST APIs", "SQL", "PostgreSQL", "Entity Framework"]
+    },
+    {
+      "name": "Frontend",
+      "skills": ["Angular", "TypeScript", "RxJS", "SCSS", "State Management"]
+    },
+    {
+      "name": "Architecture",
+      "skills": ["SOLID Principles", "Clean Architecture", "Design Patterns", "Microservices"]
+    },
+    {
+      "name": "DevOps & Cloud",
+      "skills": ["CI/CD Pipelines", "Docker", "Kubernetes", "Azure", "Google Cloud"]
+    }
+  ]
+}
