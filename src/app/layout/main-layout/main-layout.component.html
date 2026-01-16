@@ -5,6 +5,12 @@
 @if (!isLoading) {
     <div class="layout-container">
       <div class="bg-grid"></div>
+      
+      <!-- Terminal Toggle -->
+      <button class="terminal-toggle" (click)="openTerminal()" title="Open Terminal">
+        <img src="assets/images/favicon.svg" alt="Terminal" class="icon-img">
+      </button>
+
       <div class="mobile-header">
         <div class="header-status">
             <span class="status-indicator access"></span>
@@ -83,4 +89,6 @@
         </div>
       </main>
 </div>
+
+    <app-terminal></app-terminal>
 }

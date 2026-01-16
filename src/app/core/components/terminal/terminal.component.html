@@ -1,0 +1,46 @@
+@if (isOpen()) {
+<div class="terminal-backdrop" (click)="close()">
+  <div class="terminal-window glass-panel" (click)="$event.stopPropagation()">
+    
+    <!-- Title Bar -->
+    <div class="terminal-header">
+      <div class="terminal-title">
+        <span class="icon">_</span> TERMINAL_ACCESS // {{ (profile$ | async)?.name }}
+      </div>
+      <div class="terminal-controls">
+        <button class="btn-control close" (click)="close()" title="Close">X</button>
+      </div>
+    </div>
+
+    <!-- Output Area -->
+    <div class="terminal-body" #terminalBody>
+      <div *ngFor="let log of logs()" class="log-entry" [ngClass]="log.type">
+        <span class="timestamp">[{{ log.timestamp | date:'HH:mm:ss' }}]</span>
+        <ng-container [ngSwitch]="log.type">
+          <span *ngSwitchCase="'input'" class="prompt">> </span>
+          <span *ngSwitchCase="'error'" class="error-prefix">ERR: </span>
+          <span *ngSwitchCase="'system'" class="system-prefix">SYS: </span>
+        </ng-container>
+        <span class="content" [innerHTML]="linkify(log.content)"></span>
+      </div>
+
+      <!-- Input Line -->
+      <div class="input-line">
+        <span class="prompt">guest@portfolio:~$</span>
+        <input 
+          #commandInput
+          type="text" 
+          [(ngModel)]="currentCommand" 
+          (keydown.enter)="execute()"
+          (keydown.arrowup)="navigateHistory('up', $event)"
+          (keydown.arrowdown)="navigateHistory('down', $event)"
+          autofocus
+          spellcheck="false"
+          autocomplete="off"
+        >
+      </div>
+    </div>
+
+  </div>
+</div>
+}

@@ -1,0 +1,170 @@
+.terminal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 5, 13, 0.7);
+  backdrop-filter: blur(2px);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  
+  /* Initial Entry Animation */
+  animation: fadeIn 0.2s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { transform: translateY(20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+.terminal-window {
+  width: 90%;
+  max-width: 900px;
+  height: 80vh;
+  background: rgba(2, 16, 37, 0.95);
+  border: 1px solid var(--color-cyan-dim);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), 0 0 20px rgba(0, 243, 255, 0.15);
+  display: flex;
+  flex-direction: column;
+  animation: slideUp 0.3s ease-out;
+  font-family: 'Courier New', Courier, monospace;
+}
+
+.terminal-header {
+  background: var(--color-navy-light);
+  padding: 0.5rem 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid var(--color-cyan-dim);
+  user-select: none;
+
+  .terminal-title {
+    color: var(--color-cyan);
+    font-family: var(--font-header);
+    font-size: 0.9rem;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    letter-spacing: 1px;
+    
+    .icon { 
+      color: var(--color-cyan-bright); 
+      text-shadow: 0 0 5px var(--color-cyan-bright);
+    }
+  }
+
+  .terminal-controls {
+    display: flex;
+    gap: 0.5rem;
+
+    .btn-control {
+      background: none;
+      border: 1px solid transparent;
+      color: var(--color-text-muted);
+      cursor: pointer;
+      font-family: inherit;
+      width: 24px;
+      height: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+      
+      &:hover { 
+        color: var(--color-cyan-bright);
+        border-color: var(--color-cyan-dim);
+        background: rgba(0, 243, 255, 0.1);
+      }
+      &.close:hover { 
+        color: #ff5555; 
+        border-color: #ff5555;
+        background: rgba(255, 85, 85, 0.1);
+      }
+    }
+  }
+}
+
+.terminal-body {
+  flex: 1;
+  padding: 1rem;
+  overflow-y: auto;
+  color: #cccccc;
+  font-size: 1rem;
+  line-height: 1.5;
+
+  /* Custom Scrollbar */
+  &::-webkit-scrollbar { width: 8px; }
+  &::-webkit-scrollbar-track { background: #0a0a0f; }
+  &::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
+}
+
+.log-entry {
+  margin-bottom: 0.5rem;
+  word-wrap: break-word;
+  padding-left: 1.5rem;
+  text-indent: -1.5rem;
+
+  .timestamp {
+    color: #555;
+    margin-right: 0.5rem;
+    font-size: 0.8rem;
+  }
+
+  &.input {
+    color: var(--color-text-main);
+    font-weight: bold;
+    .prompt { color: var(--color-green); }
+  }
+
+  &.error {
+    color: #ff5555;
+    .error-prefix { color: #ff0000; font-weight: bold; }
+  }
+
+  &.system {
+    color: var(--color-cyan);
+    .system-prefix { color: var(--color-cyan-bright); }
+  }
+
+  &.output {
+    white-space: pre-wrap; /* Preserve formatting for lists */
+    color: #dddddd;
+  }
+}
+
+.input-line {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 1rem;
+
+  .prompt {
+    color: var(--color-green);
+    font-weight: bold;
+    flex-shrink: 0;
+  }
+
+  input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    color: var(--color-text-main);
+    font-family: inherit;
+    font-size: inherit;
+    outline: none;
+    padding: 0;
+    
+    /* Blinking Cursor Simulation handled by browser native input usually, but we keep it simple */
+    caret-color: var(--color-green);
+  }
+}
