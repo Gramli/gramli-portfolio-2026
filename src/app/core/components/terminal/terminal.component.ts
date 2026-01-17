@@ -1,4 +1,4 @@
-import { Component, ElementRef, ViewChild, AfterViewChecked, HostListener, Signal } from '@angular/core';
+import { Component, ElementRef, ViewChild, HostListener, Signal, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TerminalService } from '../../services/terminal.service';
@@ -14,7 +14,7 @@ import { Profile } from '../../models/portfolio.models';
   templateUrl: './terminal.component.html',
   styleUrls: ['./terminal.component.scss']
 })
-export class TerminalComponent implements AfterViewChecked {
+export class TerminalComponent {
   @ViewChild('terminalBody') terminalBody!: ElementRef;
   @ViewChild('commandInput') commandInput!: ElementRef;
 
@@ -30,13 +30,21 @@ export class TerminalComponent implements AfterViewChecked {
     this.isOpen = this.terminalService.isOpen;
     this.logs = this.terminalService.logs;
     this.profile$ = this.portfolioService.getProfile();
-  }
 
-  ngAfterViewChecked() {
-    this.scrollToBottom();
-    if (this.isOpen() && this.commandInput) {
-      this.commandInput.nativeElement.focus();
-    }
+    // Auto-scroll when logs change
+    effect(() => {
+      this.logs(); // Dependency
+      setTimeout(() => this.scrollToBottom(), 0);
+    });
+
+    // Auto-focus input when terminal opens
+    effect(() => {
+      if (this.isOpen()) {
+        setTimeout(() => {
+          if (this.commandInput) this.commandInput.nativeElement.focus();
+        }, 0);
+      }
+    });
   }
 
   close() {

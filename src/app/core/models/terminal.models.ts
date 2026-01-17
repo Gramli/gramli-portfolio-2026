@@ -1,6 +1,7 @@
 export interface TerminalCommand {
   command: string;
   description: string;
+  category: 'portfolio' | 'system';
   action: (args: string[]) => void | Promise<void>;
 }
 

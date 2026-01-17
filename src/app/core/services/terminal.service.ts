@@ -17,12 +17,14 @@ export class TerminalService {
   // Internal State
   private commandHistory: string[] = [];
   private commands = new Map<string, TerminalCommand>();
+  private infoHandlers = new Map<string, () => Promise<string>>();
 
   constructor(
     private portfolioService: PortfolioService,
     private aiService: AiService,
     private router: Router
   ) {
+    this.initializeInfoHandlers();
     this.registerCoreCommands();
     this.welcomeMessage();
   }
@@ -91,53 +93,30 @@ export class TerminalService {
     return this.commandHistory[newIdx] || '';
   }
 
-  private registerCoreCommands() {
-    // HELP
-    this.register('help', 'Displays a list of available commands', () => {
-      const coreCmds = Array.from(this.commands.values())
-        .map(c => `  ${c.command.padEnd(10)} - ${c.description}`)
-        .join('\n');
-      this.addLog('output', `Available Commands:\n${coreCmds}`);
-    });
-
-    // CLEAR
-    this.register('clear', 'Clears terminal output', () => {
-      this.logs.set([]);
-    });
-
-    // EXIT
-    this.register('exit', 'Closes the terminal modal', () => {
-      this.isOpen.set(false);
-    });
-
-    // ABOUT
-    this.register('about', 'Displays information about the developer', async () => {
+  private initializeInfoHandlers() {
+    this.infoHandlers.set('about', async () => {
       const profile = await firstValueFrom(this.portfolioService.getProfile());
-      const output = [
+      return [
         `IDENTITY: ${profile.name}`,
         `ROLE: ${profile.role}`,
         `LOC: ${profile.location}`,
         `BIO: ${profile.shortBio}`
       ].join('\n');
-      this.addLog('output', output);
     });
 
-    // PROJECTS
-    this.register('projects', 'Displays a list of projects', async () => {
+    this.infoHandlers.set('projects', async () => {
       const projects = await firstValueFrom(this.portfolioService.getProjects());
-      const output = projects.map((p, i) => `[${i + 1}] ${p.title}: ${p.description}`).join('\n');
-      this.addLog('output', `PROJECT_ARCHIVES:\n${output}`);
+      const list = projects.map((p, i) => `[${i + 1}] ${p.title}: ${p.description}`).join('\n');
+      return `PROJECT_ARCHIVES:\n${list}`;
     });
 
-    // SKILLS
-    this.register('skills', 'Displays a list of technical skills', async () => {
+    this.infoHandlers.set('skills', async () => {
       const skills = await firstValueFrom(this.portfolioService.getSkills());
       const output = skills.map(cat => `\n${cat.name.toUpperCase()}:\n  ${cat.skills.join(', ')}`).join('');
-      this.addLog('output', `SKILL_MATRIX:${output}`);
+      return `SKILL_MATRIX:${output}`;
     });
 
-    // CONTACT
-    this.register('contact', 'Displays contact information', async () => {
+    this.infoHandlers.set('contact', async () => {
       const profile = await firstValueFrom(this.portfolioService.getProfile());
       const output = [
         `EMAIL: ${profile.email}`,
@@ -146,14 +125,86 @@ export class TerminalService {
         profile.devto ? `DEV.TO: ${profile.devto}` : '',
         profile.blog ? `BLOG: ${profile.blog}` : ''
       ].filter(Boolean).join('\n');
-      this.addLog('output', `COMM_CHANNELS:\n${output}`);
+      return `COMM_CHANNELS:\n${output}`;
+    });
+  }
+
+  private registerCoreCommands() {
+    // HELP
+    this.register('help', 'Displays a list of available commands', 'system', () => {
+      const commands = Array.from(this.commands.values());
+      const portfolioCmds = commands.filter(c => c.category === 'portfolio');
+      const systemCmds = commands.filter(c => c.category === 'system');
+
+      let output = 'Available Commands:\n\n';
+
+      output += 'PORTFOLIO COMMANDS:\n';
+      output += portfolioCmds.map(c => `  ${c.command.padEnd(10)} - ${c.description}`).join('\n');
+      
+      output += '\n\nSYSTEM COMMANDS:\n';
+      output += systemCmds.map(c => `  ${c.command.padEnd(10)} - ${c.description}`).join('\n');
+
+      this.addLog('output', output);
     });
 
-    // SHUTDOWN
-    this.register('shutdown', 'Reloads the system', async () => {
-      this.addLog('system', 'System shutting down...');
+    // CLEAR
+    this.register('clear', 'Clears terminal output', 'system', () => {
+      this.logs.set([]);
+    });
+
+    // EXIT
+    this.register('exit', 'Closes the terminal modal', 'system', () => {
+      this.isOpen.set(false);
+    });
+
+    // INFO
+    this.register('info', 'Access portfolio data modules. Usage: info --<module>\n             Ex: "info --projects" or "info --contact"\n             Modules: ' + Array.from(this.infoHandlers.keys()).map(k => '--' + k).join(', '), 'portfolio', async (args) => {
+      const rawArg = args[0]?.toLowerCase();
       
-      for (let i = 3; i > 0; i--) {
+      if (!rawArg) {
+         const available = Array.from(this.infoHandlers.keys()).map(k => '--' + k).join(', ');
+         this.addLog('error', `Usage: info --<module>\nAvailable modules: ${available}`);
+         return;
+      }
+
+      if (!rawArg.startsWith('--')) {
+         this.addLog('error', 'Syntax Error: Arguments must be prefixed with "--".\nExample: info --' + rawArg);
+         return;
+      }
+
+      const subCommand = rawArg.substring(2);
+      
+      if (this.infoHandlers.has(subCommand)) {
+        const handler = this.infoHandlers.get(subCommand)!;
+        const output = await handler();
+        this.addLog('output', output);
+      } else {
+        const available = Array.from(this.infoHandlers.keys()).map(k => '--' + k).join(', ');
+        this.addLog('error', `Unknown module: ${subCommand}\nAvailable modules: ${available}`);
+      }
+    });
+
+    // KILL
+    this.register('kill', 'Reloads the system. Usage: kill --seconds 3', 'system', async (args) => {
+      let seconds = 3; // Default
+
+      if (args.length > 0) {
+        if (args[0] === '--seconds' && args[1]) {
+           const parsed = parseInt(args[1], 10);
+           if (!isNaN(parsed) && parsed > 0) {
+             seconds = parsed;
+           } else {
+             this.addLog('error', 'Invalid time argument. Using default 3 seconds.');
+           }
+        } else {
+           this.addLog('error', 'Usage: kill --seconds <number>');
+           return;
+        }
+      }
+
+      this.addLog('system', 'System shutdown initiated...');
+      
+      for (let i = seconds; i > 0; i--) {
         this.addLog('system', `Reboot in ${i}...`);
         await new Promise(resolve => setTimeout(resolve, 1000));
       }
@@ -162,7 +213,7 @@ export class TerminalService {
     });
 
     // AI
-    this.register('ai', 'Query the AI Assistant (Usage: ai <question>)', async (args) => {
+    this.register('ai', 'Query the AI Assistant.\n             Ex: "ai What is the tech stack in your projects?"', 'portfolio', async (args) => {
       if (args.length === 0) {
         this.addLog('error', 'Usage: ai <question>');
         return;
@@ -173,7 +224,7 @@ export class TerminalService {
     });
   }
 
-  private register(command: string, description: string, action: (args: string[]) => void | Promise<void>) {
-    this.commands.set(command, { command, description, action });
+  private register(command: string, description: string, category: 'portfolio' | 'system', action: (args: string[]) => void | Promise<void>) {
+    this.commands.set(command, { command, description, category, action });
   }
 }
