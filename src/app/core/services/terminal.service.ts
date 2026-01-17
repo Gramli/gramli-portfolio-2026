@@ -3,6 +3,7 @@ import { Router } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { PortfolioService } from './portfolio.service';
 import { AiService } from './ai.service';
+import { JobAnalyzerService } from './job-analyzer.service';
 import { TerminalCommand, TerminalLog } from '../models/terminal.models';
 
 @Injectable({
@@ -18,10 +19,12 @@ export class TerminalService {
   private commandHistory: string[] = [];
   private commands = new Map<string, TerminalCommand>();
   private infoHandlers = new Map<string, () => Promise<string>>();
+  private inputCallback: ((input: string) => void) | null = null;
 
   constructor(
     private portfolioService: PortfolioService,
     private aiService: AiService,
+    private jobAnalyzer: JobAnalyzerService,
     private router: Router
   ) {
     this.initializeInfoHandlers();
@@ -47,16 +50,37 @@ export class TerminalService {
     }]);
   }
 
+  // Updates the content of the most recent log entry
+  // Useful for updating status messages (e.g. stopping animations)
+  replaceLastLog(content: string) {
+    this.logs.update(logs => {
+      if (logs.length === 0) return logs;
+      const newLogs = [...logs];
+      const last = newLogs[newLogs.length - 1];
+      newLogs[newLogs.length - 1] = { ...last, content };
+      return newLogs;
+    });
+  }
+
   async executeCommand(input: string) {
     const trimmedInput = input.trim();
     if (!trimmedInput) return;
 
-    // Add valid command to history
-    this.commandHistory.push(trimmedInput);
-    this.historyIndex.set(this.commandHistory.length);
-    
     // Log the user input
     this.addLog('input', trimmedInput);
+    
+    // Add valid command to history (unless it's during input flow?)
+    // If inputCallback is active, maybe don't add to history? 
+    // Usually sensitive data like JDs shouldn't be in history.
+    if (this.inputCallback) {
+      this.inputCallback(input); // Pass raw input to preserve format if needed
+      this.inputCallback = null;
+      return;
+    }
+
+    // Add to history
+    this.commandHistory.push(trimmedInput);
+    this.historyIndex.set(this.commandHistory.length);
 
     // Parse command
     const parts = trimmedInput.split(' ');
@@ -218,13 +242,102 @@ export class TerminalService {
         this.addLog('error', 'Usage: ai <question>');
         return;
       }
-      this.addLog('system', 'Processing query...');
-      const response = await this.aiService.processQuery(args.join(' '));
-      this.addLog('output', `AI_RESPONSE: ${response}`);
+      this.addLog('system', 'Processing query<span class="loading-dots"><span>.</span><span>.</span><span>.</span></span>');
+      try {
+        const response = await this.aiService.processQuery(args.join(' '));
+        this.replaceLastLog('Processing query... Done.');
+        this.addLog('ai', response);
+      } catch (err: any) {
+        this.replaceLastLog('Processing query... Failed.');
+        this.addLog('error', `AI Access Failed: ${err.message || err}`);
+      }
+    });
+
+    // FIT ANALYZER
+    this.register('fit', 'Job Fit Analyzer. Usage: fit analyze', 'portfolio', async (args) => {
+      if (!args[0] || args[0] !== 'analyze') {
+        this.addLog('error', 'Usage: fit analyze');
+        return;
+      }
+      
+      const jd = await this.promptInput('Paste Job Description below (single line or block):');
+      if (!jd) {
+          this.addLog('system', 'Analysis cancelled (empty input).');
+          return;
+      }
+
+      this.addLog('system', 'Analyzing data<span class="loading-dots"><span>.</span><span>.</span><span>.</span></span>');
+      
+      try {
+        const result = await this.jobAnalyzer.analyze(jd);
+        this.replaceLastLog('Analyzing data... Done.');
+        
+        let report = `\n>> FIT ANALYSIS REPORT <<\n`;
+        report += `MATCH SCORE: ${result.score}%\n`;
+        report += `REQ SKILLS COVERAGE: ${result.requiredSkillsCoverage}%\n`;
+        report += `NICE-TO-HAVE COVERAGE: ${result.niceToHaveSkillsCoverage}%\n\n`;
+        
+        report += `STRENGTHS:\n${result.strengths.map(s => `+ ${s}`).join('\n')}\n\n`;
+        report += `GAPS:\n${result.gaps.map(g => `- ${g}`).join('\n')}\n\n`;
+        report += `CONCLUSION:\n${result.conclusion}`;
+        
+        this.addLog('ai', report);
+        
+        const doExport = await this.promptInput('Do you want to export the result? (y/n)');
+        if (doExport.toLowerCase().startsWith('y')) {
+             const format = await this.promptInput('Format (txt/md)?');
+             if (format === 'txt' || format === 'md') {
+                this.downloadReport(result, format);
+                this.addLog('system', 'Report downloaded.');
+             } else {
+                this.addLog('error', 'Invalid format. Export cancelled.');
+             }
+        }
+      } catch (e) {
+         this.addLog('error', 'Analysis Error: ' + e);
+      }
     });
   }
 
   private register(command: string, description: string, category: 'portfolio' | 'system', action: (args: string[]) => void | Promise<void>) {
     this.commands.set(command, { command, description, category, action });
+  }
+
+  private promptInput(prompt: string): Promise<string> {
+    this.addLog('system', prompt);
+    return new Promise(resolve => {
+        this.inputCallback = resolve;
+    });
+  }
+
+  private downloadReport(result: any, format: 'txt' | 'md') {
+      const date = new Date().toISOString().split('T')[0];
+      const filename = `fit_analysis_${date}.${format}`;
+      let content = '';
+
+      if (format === 'md') {
+          content = `# Job Fit Analysis Report\nDate: ${date}\n\n`;
+          content += `## Score: ${result.score}%\n`;
+          content += `**Required Skills Coverage**: ${result.requiredSkillsCoverage}%\n`;
+          content += `**Nice-to-Have Coverage**: ${result.niceToHaveSkillsCoverage}%\n\n`;
+          content += `### Strengths\n${result.strengths.map((s: string) => `- ${s}`).join('\n')}\n\n`;
+          content += `### Gaps\n${result.gaps.map((g: string) => `- ${g}`).join('\n')}\n\n`;
+          content += `### Conclusion\n${result.conclusion}\n`;
+      } else {
+          content = `JOB FIT ANALYSIS REPORT\nDate: ${date}\n\n`;
+          content += `SCORE: ${result.score}%\n`;
+          content += `REQ SKILLS: ${result.requiredSkillsCoverage}%\n`;
+          content += `STRENGTHS:\n${result.strengths.map((s: string) => `- ${s}`).join('\n')}\n\n`;
+          content += `GAPS:\n${result.gaps.map((g: string) => `- ${g}`).join('\n')}\n\n`;
+          content += `CONCLUSION:\n${result.conclusion}\n`;
+      }
+
+      const blob = new Blob([content], { type: 'text/plain' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      a.click();
+      window.URL.revokeObjectURL(url);
   }
 }

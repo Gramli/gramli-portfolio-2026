@@ -1,0 +1,88 @@
+<div class="fit-container">
+  <header>
+    <h1 class="page-title text-header glow-text">JOB FIT ANALYZER</h1>
+    <p class="instruction">Paste a job description to see how well it matches the portfolio.</p>
+  </header>
+
+  <div class="form-panel input-section">
+    <textarea 
+      [(ngModel)]="jobDescription" 
+      placeholder="Paste Job Description here..."
+      rows="10"
+      [disabled]="isAnalyzing()">
+    </textarea>
+    
+    <button class="btn-submit" (click)="analyze()" [disabled]="!jobDescription.trim() || isAnalyzing()">
+      {{ isAnalyzing() ? 'Analyzing...' : 'Analyze Fit' }}
+    </button>
+  </div>
+
+  <!-- Result Modal / Overlay -->
+  @if (result() || isAnalyzing()) {
+    <div class="result-overlay">
+      <div class="result-modal">
+        @if (isAnalyzing()) {
+          <div class="loader">
+            <div class="spinner"></div>
+            <p>Analyzing data against portfolio archives...</p>
+          </div>
+        } @else {
+          <div class="result-content">
+            <div class="score-header">
+              <div class="score-circle">
+                <span class="score-value">{{ result()?.score }}%</span>
+                <span class="score-label">MATCH</span>
+              </div>
+              <div class="coverage-stats">
+                <div class="stat">
+                  <span class="label">Required Skills</span>
+                  <div class="bar-container">
+                    <div class="bar" [style.width.%]="result()?.requiredSkillsCoverage"></div>
+                  </div>
+                  <span class="value">{{ result()?.requiredSkillsCoverage }}%</span>
+                </div>
+                <div class="stat">
+                  <span class="label">Nice-to-Have</span>
+                  <div class="bar-container">
+                    <div class="bar" [style.width.%]="result()?.niceToHaveSkillsCoverage"></div>
+                  </div>
+                  <span class="value">{{ result()?.niceToHaveSkillsCoverage }}%</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="details-grid">
+              <div class="column strengths">
+                <h3>Strengths</h3>
+                <ul>
+                  @for (item of result()?.strengths; track item) {
+                    <li>{{ item }}</li>
+                  }
+                </ul>
+              </div>
+              <div class="column gaps">
+                <h3>Gaps</h3>
+                <ul>
+                  @for (item of result()?.gaps; track item) {
+                    <li>{{ item }}</li>
+                  }
+                </ul>
+              </div>
+            </div>
+
+            <div class="conclusion">
+              <h3>Conclusion</h3>
+              <p>{{ result()?.conclusion }}</p>
+            </div>
+
+            <div class="actions">
+              <button (click)="download('txt')">Export TXT</button>
+              <button (click)="download('md')">Export MD</button>
+              <button class="close-btn" (click)="result.set(null)">Close</button>
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+  }
+</div>

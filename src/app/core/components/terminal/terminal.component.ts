@@ -1,6 +1,7 @@
 import { Component, ElementRef, ViewChild, HostListener, Signal, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { TerminalService } from '../../services/terminal.service';
 import { TerminalLog } from '../../models/terminal.models';
 import { PortfolioService } from '../../services/portfolio.service';
@@ -25,7 +26,8 @@ export class TerminalComponent {
 
   constructor(
     private terminalService: TerminalService,
-    private portfolioService: PortfolioService
+    private portfolioService: PortfolioService,
+    private sanitizer: DomSanitizer
   ) {
     this.isOpen = this.terminalService.isOpen;
     this.logs = this.terminalService.logs;
@@ -80,10 +82,11 @@ export class TerminalComponent {
   }
 
   // Basic linkifier for output
-  linkify(text: string): string {
+  linkify(text: string): SafeHtml {
     const urlRegex = /(https?:\/\/[^\s]+)/g;
-    return text.replace(urlRegex, (url) => {
+    const linkedText = text.replace(urlRegex, (url) => {
       return `<a href="${url}" target="_blank" style="color: #00bcd4; text-decoration: underline;">${url}</a>`;
     });
+    return this.sanitizer.bypassSecurityTrustHtml(linkedText);
   }
 }

@@ -6,7 +6,7 @@ export interface TerminalCommand {
 }
 
 export interface TerminalLog {
-  type: 'input' | 'output' | 'system' | 'error';
+  type: 'input' | 'output' | 'system' | 'error' | 'ai';
   content: string;
   timestamp: Date;
 }

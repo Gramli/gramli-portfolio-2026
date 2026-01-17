@@ -14,15 +14,26 @@
 
     <!-- Output Area -->
     <div class="terminal-body" #terminalBody>
-      <div *ngFor="let log of logs()" class="log-entry" [ngClass]="log.type">
-        <span class="timestamp">[{{ log.timestamp | date:'HH:mm:ss' }}]</span>
-        <ng-container [ngSwitch]="log.type">
-          <span *ngSwitchCase="'input'" class="prompt">> </span>
-          <span *ngSwitchCase="'error'" class="error-prefix">ERR: </span>
-          <span *ngSwitchCase="'system'" class="system-prefix">SYS: </span>
-        </ng-container>
-        <span class="content" [innerHTML]="linkify(log.content)"></span>
-      </div>
+      @for (log of logs(); track $index) {
+        <div class="log-entry" [ngClass]="log.type">
+          <span class="timestamp">[{{ log.timestamp | date:'HH:mm:ss' }}]</span>
+          @switch (log.type) {
+            @case ('input') {
+              <span class="prompt">> </span>
+            }
+            @case ('error') {
+              <span class="error-prefix">ERR: </span>
+            }
+            @case ('system') {
+              <span class="system-prefix">SYS: </span>
+            }
+            @case ('ai') {
+              <span class="ai-prefix">AI EXTERNAL SYSTEM: </span>
+            }
+          }
+          <span class="content" [innerHTML]="linkify(log.content)"></span>
+        </div>
+      }
 
       <!-- Input Line -->
       <div class="input-line">

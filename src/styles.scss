@@ -91,3 +91,92 @@ body {
   background-size: 40px 40px;
   pointer-events: none;
 }
+
+/* -- Shared Component Styles -- */
+.page-title {
+    margin-bottom: 2rem;
+    font-size: 2rem;
+    border-bottom: 1px solid var(--color-navy-light);
+    padding-bottom: 1rem;
+    color: var(--color-cyan);
+
+    @media (max-width: 360px) {
+        font-size: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+}
+
+.instruction {
+    color: var(--color-text-muted);
+    margin-bottom: 2rem;
+    font-family: monospace;
+}
+
+/* Standard Form Panel Styling */
+.form-panel {
+    padding: 2rem;
+    background: rgba(2, 16, 37, 0.6);
+    
+    @media (max-width: 480px) {
+        padding: 1rem;
+    }
+
+    @media (max-width: 360px) {
+        padding: 0.75rem;
+    }
+
+    input, textarea {
+        width: 100%;
+        background: rgba(0, 0, 0, 0.3);
+        border: 1px solid var(--color-navy-light);
+        padding: 1rem;
+        color: var(--color-text-main);
+        font-family: var(--font-body);
+        font-size: 1rem;
+        transition: all 0.3s;
+
+        @media (max-width: 360px) {
+            padding: 0.75rem;
+            font-size: 0.9rem;
+        }
+
+        &:focus {
+            outline: none;
+            border-color: var(--color-cyan);
+            box-shadow: 0 0 10px rgba(0, 243, 255, 0.1);
+            background: rgba(0, 243, 255, 0.02);
+        }
+        
+        &:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+    }
+
+    .btn-submit {
+        width: 100%;
+        padding: 1rem;
+        background: var(--color-cyan-dim);
+        color: var(--color-void);
+        border: none;
+        font-family: var(--font-header);
+        font-weight: bold;
+        cursor: pointer;
+        transition: all 0.3s;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+
+        &:hover:not(:disabled) {
+            background: var(--color-cyan-bright);
+            box-shadow: 0 0 15px rgba(0, 243, 255, 0.5);
+        }
+
+        &:disabled {
+            opacity: 0.5;
+            background: var(--color-navy-light);
+            color: var(--color-text-muted);
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+    }
+}

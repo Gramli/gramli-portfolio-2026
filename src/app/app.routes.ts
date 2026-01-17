@@ -24,6 +24,10 @@ export const routes: Routes = [
         loadComponent: () => import('./features/skills/skills.component').then(m => m.SkillsComponent)
       },
       {
+        path: 'fit-analyzer',
+        loadComponent: () => import('./features/job-fit/job-fit.component').then(m => m.JobFitComponent)
+      },
+      {
         path: 'contact',
         loadComponent: () => import('./features/contact/contact.component').then(m => m.ContactComponent)
       }
