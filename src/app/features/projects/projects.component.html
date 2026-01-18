@@ -36,11 +36,12 @@
            </div>
 
            <div class="card-actions">
-             @if (project.sourceUrl) {
-             <a [href]="project.sourceUrl" target="_blank" class="btn-action">
+             <a [attr.href]="project.sourceUrl || null" 
+                [attr.target]="project.sourceUrl ? '_blank' : null"
+                class="btn-action"
+                [class.disabled]="!project.sourceUrl">
                <span class="bracket">[</span> SOURCE <span class="bracket">]</span>
              </a>
-             }
              @if (project.liveUrl) {
              <a [href]="project.liveUrl" target="_blank" class="btn-action primary">
                <span class="bracket">[</span> LAUNCH <span class="bracket">]</span>

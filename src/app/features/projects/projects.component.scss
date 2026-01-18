@@ -163,6 +163,13 @@
 
         &.primary { color: var(--color-cyan-bright); }
 
+        &.disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+            pointer-events: none;
+            color: var(--color-text-muted); /* Ensure it stays muted */
+        }
+
         &:hover {
             color: var(--color-text-main);
             text-shadow: 0 0 5px var(--color-cyan-bright);

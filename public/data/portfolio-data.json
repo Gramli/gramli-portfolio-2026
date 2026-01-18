@@ -64,8 +64,7 @@
       "technologies": ["Angular", "NgRx", "TypeScript", "RxJS", "Material"],
       "role": "Frontend Lead",
       "type": "personal",
-      "status": "archived",
-      "sourceUrl": "https://github.com/gramli/droid-cmd"
+      "status": "archived"
     }
   ],
   "skills": [
