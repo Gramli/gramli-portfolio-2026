@@ -3,36 +3,44 @@ import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 import { PortfolioService } from './portfolio.service';
 import { JobDescriptionAnalysis } from '../models/job-fit.models';
+import { AppConfig } from '../models/app.models';
+
+interface GeminiResponse {
+  candidates?: Array<{
+    content: {
+      parts: Array<{ text: string }>;
+    };
+  }>;
+}
+
+interface AiPayload {
+  type: 'job-parse' | 'chat';
+  prompt: string;
+  contextData?: string;
+}
 
 @Injectable({
   providedIn: 'root'
 })
 export class AiService {
-  private readonly PROXY_ENDPOINT = 'https://portfolio-proxy-768859394911.europe-west1.run.app/';
+  private appConfig: AppConfig | null = null;
 
   constructor(
-    private http: HttpClient,
-    private portfolioService: PortfolioService
+    private readonly http: HttpClient,
+    private readonly portfolioService: PortfolioService
   ) {}
 
   async parseJobDescription(jobDescription: string): Promise<JobDescriptionAnalysis> {
     try {
-      const payload = {
+      const payload: AiPayload = {
         type: 'job-parse',
         prompt: jobDescription
       };
 
-      // Expecting a standard Gemini response structure proxied from backend
-      const response = await firstValueFrom(
-        this.http.post<any>(this.PROXY_ENDPOINT, payload)
-      );
-
-      let text = this.extractResponseText(response);
+      const response = await this.postToProxy(payload);
+      const contentText = this.extractResponseText(response);
       
-      // Clean potential markdown just in case (e.g. ```json ... ```)
-      text = text.replace(/```json/g, '').replace(/```/g, '').trim();
-      
-      return JSON.parse(text) as JobDescriptionAnalysis;
+      return this.parseJsonContent(contentText);
     } catch (error) {
       console.error('AI Parsing Error:', error);
       throw new Error('Failed to parse Job Description');
@@ -41,40 +49,58 @@ export class AiService {
 
   async processQuery(query: string): Promise<string> {
     try {
-      // Gather context
-      const profile = await firstValueFrom(this.portfolioService.getProfile());
-      const projects = await firstValueFrom(this.portfolioService.getProjects());
-      const skills = await firstValueFrom(this.portfolioService.getSkills());
-
-      const contextData = JSON.stringify({
-        profile,
-        projects,
-        skills
-      });
-
-      const payload = {
+      const contextData = await this.buildPortfolioContext();
+      
+      const payload: AiPayload = {
         type: 'chat',
         prompt: query,
-        contextData: contextData
+        contextData
       };
 
-      const response = await firstValueFrom(
-        this.http.post<any>(this.PROXY_ENDPOINT, payload)
-      );
-
+      const response = await this.postToProxy(payload);
       return this.extractResponseText(response);
-      
     } catch (error) {
       console.error('AI Error:', error);
       return 'Critical Error: Neural Link disrupted. Unable to process query.';
     }
   }
 
-  private extractResponseText(response: any): string {
-    // Traverse the Gemini response structure: candidates[0].content.parts[0].text
-    if (response?.candidates?.[0]?.content?.parts?.[0]?.text) {
-      return response.candidates[0].content.parts[0].text;
+  private async postToProxy(payload: AiPayload): Promise<GeminiResponse> {
+    await this.ensureConfigLoaded();
+    return firstValueFrom(
+      this.http.post<GeminiResponse>(this.appConfig!.api.proxyEndpoint, payload)
+    );
+  }
+
+  private async ensureConfigLoaded(): Promise<void> {
+    if (!this.appConfig) {
+      this.appConfig = await firstValueFrom(this.http.get<AppConfig>('data/app.config.json'));
     }
-    throw new Error('Invalid AI Response Structure');
+  }
+
+  private async buildPortfolioContext(): Promise<string> {
+    const [profile, projects, skills] = await Promise.all([
+      firstValueFrom(this.portfolioService.getProfile()),
+      firstValueFrom(this.portfolioService.getProjects()),
+      firstValueFrom(this.portfolioService.getSkills())
+    ]);
+
+    return JSON.stringify({ profile, projects, skills });
+  }
+
+  private extractResponseText(response: GeminiResponse): string {
+    const text = response.candidates?.[0]?.content?.parts?.[0]?.text;
+    
+    if (!text) {
+      throw new Error('Invalid AI Response Structure');
+    }
+    
+    return text;
+  }
+
+  private parseJsonContent(text: string): JobDescriptionAnalysis {
+    const cleanText = text.replace(/```json/g, '').replace(/```/g, '').trim();
+    return JSON.parse(cleanText) as JobDescriptionAnalysis;
   }
 }
+

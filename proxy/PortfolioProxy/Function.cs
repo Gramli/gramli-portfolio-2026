@@ -40,10 +40,9 @@ public class Function : IHttpFunction
   private readonly IHttpClientFactory _httpClientFactory;
   private readonly ILogger<Function> _logger;
 
-  private const string GeminiModel = "gemini-3-flash-preview";
+  private const string GeminiModel = "gemini-2.0-flash-lite";
   private const string GeminiBaseUrl = "https://generativelanguage.googleapis.com/v1beta/models";
 
-  // Security: Limit the incoming request size to 1MB to prevent OOM/DOS attacks.
   private const long MaxRequestSize = 1024 * 1024;
 
   public Function(IHttpClientFactory httpClientFactory, ILogger<Function> logger)
@@ -54,7 +53,6 @@ public class Function : IHttpFunction
 
   public async Task HandleAsync(HttpContext context)
   {
-    // Security: Apply strict CORS and Security Headers.
     ApplySecurityHeaders(context);
 
     if (HttpMethods.IsOptions(context.Request.Method))
@@ -69,7 +67,6 @@ public class Function : IHttpFunction
       return;
     }
 
-    // Security: Enforce request size limits early.
     if (context.Request.ContentLength > MaxRequestSize)
     {
       await SendErrorAsync(context, HttpStatusCode.RequestEntityTooLarge, "Payload exceeds limit.");
@@ -97,7 +94,6 @@ public class Function : IHttpFunction
 
   private async Task ProcessAiRequestAsync(HttpContext context)
   {
-    // Security: Ensure API Key is never exposed via logs or headers.
     var apiKey = Environment.GetEnvironmentVariable("API_KEY");
     if (string.IsNullOrWhiteSpace(apiKey))
     {
@@ -106,7 +102,6 @@ public class Function : IHttpFunction
       return;
     }
 
-    // Performance: Use async stream deserialization with source-generated context.
     var proxyRequest = await JsonSerializer.DeserializeAsync(
         context.Request.Body,
         AiProxyJsonContext.Default.AiProxyRequest);
@@ -122,8 +117,6 @@ public class Function : IHttpFunction
 
     using var client = _httpClientFactory.CreateClient("GeminiClient");
 
-    // Performance: Avoid buffering the whole response in memory if possible.
-    // However, Gemini REST API typically sends complete JSON objects.
     using var response = await client.PostAsJsonAsync(endpoint, geminiPayload, context.RequestAborted);
 
     if (!response.IsSuccessStatusCode)
@@ -134,7 +127,6 @@ public class Function : IHttpFunction
       return;
     }
 
-    // Performance: Directly stream the response content to the client.
     context.Response.ContentType = "application/json";
     context.Response.StatusCode = (int)HttpStatusCode.OK;
     await response.Content.CopyToAsync(context.Response.Body);
@@ -152,7 +144,7 @@ public class Function : IHttpFunction
       generationConfig = new
       {
         responseMimeType = isJobParse ? "application/json" : "text/plain",
-        temperature = isJobParse ? 0.1 : 0.7 // Low temp for extraction, higher for conversation
+        temperature = isJobParse ? 0.1 : 0.7
       },
       tools = isChat ? new[] { new { googleSearch = new { } } } : null,
       systemInstruction = new { parts = new[] { new { text = systemInstruction } } }

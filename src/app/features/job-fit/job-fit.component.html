@@ -15,6 +15,21 @@
     <button class="btn-submit" (click)="analyze()" [disabled]="!jobDescription.trim() || isAnalyzing()">
       {{ isAnalyzing() ? 'Analyzing...' : 'Analyze Fit' }}
     </button>
+
+    <div class="algorithm-info">
+      <details>
+        <summary>How is this score calculated?</summary>
+        <div class="details-content">
+          <p>This isn't just a keyword counter. The system analyzes the <strong>context</strong> of your Job Description.</p>
+          <ul>
+             <li><span class="highlight">CORE SKILLS:</span> We check if the candidate has the "Must-Haves" you listed.</li>
+             <li><span class="highlight">SMART MATCHING:</span> It understands that "React" and "ReactJS" are the same thing.</li>
+             <li><span class="highlight">PROJECT PROOF:</span> The score is higher if the skill was used in shipped projects.</li>
+             <li><span class="highlight">BONUS POINTS:</span> "Nice-to-haves" and extra experience boost the score.</li>
+          </ul>
+        </div>
+      </details>
+    </div>
   </div>
 
   <!-- Result Modal / Overlay -->
@@ -22,10 +37,7 @@
     <div class="result-overlay">
       <div class="result-modal">
         @if (isAnalyzing()) {
-          <div class="loader">
-            <div class="spinner"></div>
-            <p>Analyzing data against portfolio archives...</p>
-          </div>
+          <app-loader [message]="'ANALYZING DATA...'" [type]="'inline'"></app-loader>
         } @else {
           <div class="result-content">
             <div class="score-header">

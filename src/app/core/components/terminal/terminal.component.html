@@ -13,7 +13,7 @@
     </div>
 
     <!-- Output Area -->
-    <div class="terminal-body" #terminalBody>
+    <div class="terminal-body" #terminalBody (contextmenu)="onRightClick($event)">
       @for (log of logs(); track $index) {
         <div class="log-entry" [ngClass]="log.type">
           <span class="timestamp">[{{ log.timestamp | date:'HH:mm:ss' }}]</span>

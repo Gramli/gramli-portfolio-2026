@@ -1,5 +1,4 @@
-<div class="loader-overlay">
-    @if (loadingState$ | async; as state) {
+<div [class]="type === 'fullscreen' ? 'loader-overlay' : 'loader-inline'">
     <div class="loader-content">
         <div class="scanner-container">
             <div class="scanner-ring"></div>
@@ -7,16 +6,19 @@
         </div>
         
         <div class="data-stream">
+            @if (progress !== null) {
             <div class="progress-bar-container tech-border">
-                <div class="progress-bar" [style.width.%]="state.p"></div>
+                <div class="progress-bar" [style.width.%]="progress"></div>
             </div>
+            }
             
             <p class="status-text glow-text">
-                <span class="prefix">>></span> {{ state.t }}
+                <span class="prefix">>></span> {{ message }}
             </p>
             
-            <p class="percentage">{{ state.p }}%</p>
+            @if (progress !== null) {
+            <p class="percentage">{{ progress }}%</p>
+            }
         </div>
     </div>
-    }
 </div>

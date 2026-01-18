@@ -47,14 +47,37 @@
     border-bottom: 1px solid var(--color-navy-light);
     display: flex;
     justify-content: space-between;
-    align-items: center;
+    align-items: flex-start;
     background: rgba(0, 243, 255, 0.05);
+
+    .header-content {
+      display: flex;
+      flex-direction: column;
+      gap: 0.3rem;
+    }
 
     .project-title {
         font-family: var(--font-header);
         font-size: 1.1rem;
         color: var(--color-cyan-bright);
         margin: 0;
+        line-height: 1.2;
+    }
+
+    .type-badge {
+       font-family: monospace;
+       font-size: 0.6rem;
+       letter-spacing: 0.1em;
+       text-transform: uppercase;
+       opacity: 0.8;
+       
+       &.commercial {
+         color: #ffd700; 
+       }
+       
+       &.personal {
+         color: var(--color-cyan);
+       }
     }
 
     .status-badge {

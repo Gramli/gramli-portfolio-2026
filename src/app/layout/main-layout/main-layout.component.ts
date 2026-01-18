@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterOutlet, RouterLink, RouterLinkActive } from '@angular/router';
 import { LoaderComponent } from '../../core/components/loader/loader.component';
+import { SystemBootLoaderComponent } from '../../core/components/system-boot-loader/system-boot-loader.component';
 import { TerminalComponent } from '../../core/components/terminal/terminal.component';
 import { PortfolioService } from '../../core/services/portfolio.service';
 import { VisitorInfoService, VisitorInfo } from '../../core/services/visitor-info.service';
@@ -12,7 +13,7 @@ import { Profile } from '../../core/models/portfolio.models';
 @Component({
   selector: 'app-main-layout',
   standalone: true,
-  imports: [CommonModule, RouterOutlet, RouterLink, RouterLinkActive, LoaderComponent, TerminalComponent],
+  imports: [CommonModule, RouterOutlet, RouterLink, RouterLinkActive, SystemBootLoaderComponent, TerminalComponent],
   templateUrl: './main-layout.component.html',
   styleUrls: ['./main-layout.component.scss']
 })
@@ -30,9 +31,19 @@ export class MainLayoutComponent implements OnInit {
     this.profile$ = this.portfolioService.getProfile();
   }
 
-  async ngOnInit() {
-    this.visitorInfo = await this.visitorService.getVisitorInfo();
+  ngOnInit() {
+    // Non-blocking background fetch
+    this.visitorService.getVisitorInfo()
+      .then(info => {
+        this.visitorInfo = info;
+      })
+      .catch(err => console.error('Visitor info skipped', err));
   }
+
+  onBootComplete() {
+    this.isLoading = false;
+  }
+
 
   toggleMenu() {
     this.isMenuOpen = !this.isMenuOpen;

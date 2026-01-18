@@ -1,11 +1,11 @@
-import { Component, ElementRef, ViewChild, HostListener, Signal, effect } from '@angular/core';
+import { Component, ElementRef, ViewChild, Signal, effect, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
+import { Observable } from 'rxjs';
 import { TerminalService } from '../../services/terminal.service';
 import { TerminalLog } from '../../models/terminal.models';
 import { PortfolioService } from '../../services/portfolio.service';
-import { Observable } from 'rxjs';
 import { Profile } from '../../models/portfolio.models';
 
 @Component({
@@ -16,77 +16,98 @@ import { Profile } from '../../models/portfolio.models';
   styleUrls: ['./terminal.component.scss']
 })
 export class TerminalComponent {
-  @ViewChild('terminalBody') terminalBody!: ElementRef;
-  @ViewChild('commandInput') commandInput!: ElementRef;
+  @ViewChild('terminalBody') terminalBody!: ElementRef<HTMLDivElement>;
+  @ViewChild('commandInput') commandInput!: ElementRef<HTMLInputElement>;
 
-  isOpen: Signal<boolean>;
-  logs: Signal<TerminalLog[]>;
+  private readonly terminalService = inject(TerminalService);
+  private readonly portfolioService = inject(PortfolioService);
+  private readonly sanitizer = inject(DomSanitizer);
+
+  readonly isOpen: Signal<boolean> = this.terminalService.isOpen;
+  readonly logs: Signal<TerminalLog[]> = this.terminalService.logs;
+  readonly profile$: Observable<Profile> = this.portfolioService.getProfile();
+
   currentCommand = '';
-  profile$: Observable<Profile>;
 
-  constructor(
-    private terminalService: TerminalService,
-    private portfolioService: PortfolioService,
-    private sanitizer: DomSanitizer
-  ) {
-    this.isOpen = this.terminalService.isOpen;
-    this.logs = this.terminalService.logs;
-    this.profile$ = this.portfolioService.getProfile();
-
+  constructor() {
     // Auto-scroll when logs change
     effect(() => {
-      this.logs(); // Dependency
+      this.logs(); 
       setTimeout(() => this.scrollToBottom(), 0);
     });
 
     // Auto-focus input when terminal opens
     effect(() => {
       if (this.isOpen()) {
-        setTimeout(() => {
-          if (this.commandInput) this.commandInput.nativeElement.focus();
-        }, 0);
+        setTimeout(() => this.commandInput?.nativeElement?.focus(), 0);
       }
     });
   }
 
-  close() {
+  close(): void {
     this.terminalService.toggle();
   }
 
-  execute() {
-    this.terminalService.executeCommand(this.currentCommand);
+  execute(): void {
+    this.terminalService.execute(this.currentCommand);
     this.currentCommand = '';
   }
 
-  navigateHistory(direction: 'up' | 'down', event: Event) {
+  navigateHistory(direction: 'up' | 'down', event: Event): void {
     event.preventDefault();
-    const cmd = this.terminalService.getCommandHistory(direction);
-    // Only update if we get a result (empty string is valid for "new line")
-    // but the service logic returns current line if index moves back to end.
-    // Let's rely on the service to return logic string.
-    this.currentCommand = cmd;
+    this.currentCommand = this.terminalService.navigateHistory(direction);
     
     // Move cursor to end
     setTimeout(() => {
-        if (this.commandInput) {
-            const el = this.commandInput.nativeElement;
-            el.selectionStart = el.selectionEnd = el.value.length;
-        }
+      if (this.commandInput) {
+        const el = this.commandInput.nativeElement;
+        el.selectionStart = el.selectionEnd = el.value.length;
+      }
     });
   }
 
-  private scrollToBottom() {
-    if (this.terminalBody) {
-      this.terminalBody.nativeElement.scrollTop = this.terminalBody.nativeElement.scrollHeight;
+  async onRightClick(event: MouseEvent): Promise<void> {
+    // If user has selected text, allow default context menu (copy)
+    if (window.getSelection()?.toString()) {
+      return;
+    }
+
+    event.preventDefault();
+
+    try {
+      const text = await navigator.clipboard.readText();
+      if (!text) return;
+
+      // Insert at cursor position
+      const input = this.commandInput.nativeElement;
+      const start = input.selectionStart ?? this.currentCommand.length;
+      const end = input.selectionEnd ?? start;
+
+      this.currentCommand = 
+        this.currentCommand.substring(0, start) + 
+        text + 
+        this.currentCommand.substring(end);
+
+      setTimeout(() => {
+        input.focus();
+        input.selectionStart = input.selectionEnd = start + text.length;
+      });
+    } catch (err) {
+      console.warn('Clipboard access denied', err);
     }
   }
 
-  // Basic linkifier for output
   linkify(text: string): SafeHtml {
     const urlRegex = /(https?:\/\/[^\s]+)/g;
     const linkedText = text.replace(urlRegex, (url) => {
       return `<a href="${url}" target="_blank" style="color: #00bcd4; text-decoration: underline;">${url}</a>`;
     });
     return this.sanitizer.bypassSecurityTrustHtml(linkedText);
+  }
+
+  private scrollToBottom(): void {
+    if (this.terminalBody) {
+      this.terminalBody.nativeElement.scrollTop = this.terminalBody.nativeElement.scrollHeight;
+    }
   }
 }

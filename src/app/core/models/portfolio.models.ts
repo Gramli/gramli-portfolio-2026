@@ -9,6 +9,7 @@ export interface Project {
   liveUrl?: string;
   sourceUrl?: string;
   imageUrl?: string;
+  type?: 'commercial' | 'personal';
   status: 'online' | 'offline' | 'archived' | 'in-development';
 }
 

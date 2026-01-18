@@ -6,7 +6,12 @@
         @for (project of projects; track project.id) {
         <div class="project-card tech-border">
            <div class="card-header">
-             <h3 class="project-title">{{ project.title }}</h3>
+             <div class="header-content">
+               <h3 class="project-title">{{ project.title }}</h3>
+               @if (project.type) {
+                 <span class="type-badge" [ngClass]="project.type">{{ project.type === 'commercial' ? 'COMMERCIAL' : 'OPEN SOURCE' }}</span>
+               }
+             </div>
              <span class="status-badge" [ngClass]="project.status">{{ project.status }}</span>
            </div>
            

@@ -1,0 +1,29 @@
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.5.2.0
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "proxy", "proxy", "{F9C07279-9FC2-56E5-BB47-2338B3B825A0}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PortfolioProxy", "PortfolioProxy.csproj", "{354F12DE-CE16-D3B5-06FB-20C080582527}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{354F12DE-CE16-D3B5-06FB-20C080582527}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{354F12DE-CE16-D3B5-06FB-20C080582527}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{354F12DE-CE16-D3B5-06FB-20C080582527}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{354F12DE-CE16-D3B5-06FB-20C080582527}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{354F12DE-CE16-D3B5-06FB-20C080582527} = {F9C07279-9FC2-56E5-BB47-2338B3B825A0}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {D75C4160-9CA5-4134-93E8-D8835915F199}
+	EndGlobalSection
+EndGlobal

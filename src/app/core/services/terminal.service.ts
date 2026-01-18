@@ -1,337 +1,276 @@
-import { Injectable, signal, computed } from '@angular/core';
-import { Router } from '@angular/router';
+import { Injectable, signal } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { PortfolioService } from './portfolio.service';
 import { AiService } from './ai.service';
 import { JobAnalyzerService } from './job-analyzer.service';
 import { TerminalCommand, TerminalLog } from '../models/terminal.models';
+import { TERMINAL_CONFIG, TerminalCommandId, CommandCategory, CommandDefinition } from '../config/terminal.config';
 
 @Injectable({
   providedIn: 'root'
 })
 export class TerminalService {
-  // State Signals
-  isOpen = signal<boolean>(false);
-  logs = signal<TerminalLog[]>([]);
-  historyIndex = signal<number>(-1);
+  public readonly isOpen = signal<boolean>(false);
+  public readonly logs = signal<TerminalLog[]>([]);
+  public readonly historyIndex = signal<number>(-1);
+
+  private readonly commandHistory: string[] = [];
+  private readonly commands = new Map<string, TerminalCommand>();
+  private readonly infoHandlers = new Map<string, () => Promise<string>>();
   
-  // Internal State
-  private commandHistory: string[] = [];
-  private commands = new Map<string, TerminalCommand>();
-  private infoHandlers = new Map<string, () => Promise<string>>();
-  private inputCallback: ((input: string) => void) | null = null;
+  private activeInputCallback: ((input: string) => void) | null = null;
 
   constructor(
-    private portfolioService: PortfolioService,
-    private aiService: AiService,
-    private jobAnalyzer: JobAnalyzerService,
-    private router: Router
+    private readonly portfolioService: PortfolioService,
+    private readonly aiService: AiService,
+    private readonly jobAnalyzer: JobAnalyzerService
   ) {
-    this.initializeInfoHandlers();
-    this.registerCoreCommands();
-    this.welcomeMessage();
+    this.initialize();
   }
 
-  toggle() {
+  public toggle(): void {
     this.isOpen.update(v => !v);
   }
 
-  private welcomeMessage() {
-    this.addLog('system', 'Initializing System Interface v2.0.26...');
-    this.addLog('system', 'Connection established.');
-    this.addLog('system', 'Type "help" for a list of available commands.');
+  public log(type: TerminalLog['type'], content: string): void {
+    this.logs.update(current => [
+      ...current, { type, content, timestamp: new Date() }
+    ]);
   }
 
-  addLog(type: TerminalLog['type'], content: string) {
-    this.logs.update(logs => [...logs, {
-      type,
-      content,
-      timestamp: new Date()
-    }]);
-  }
-
-  // Updates the content of the most recent log entry
-  // Useful for updating status messages (e.g. stopping animations)
-  replaceLastLog(content: string) {
-    this.logs.update(logs => {
-      if (logs.length === 0) return logs;
-      const newLogs = [...logs];
-      const last = newLogs[newLogs.length - 1];
-      newLogs[newLogs.length - 1] = { ...last, content };
-      return newLogs;
+  public updateLastLog(content: string): void {
+    this.logs.update(current => {
+      if (current.length === 0) return current;
+      const last = current[current.length - 1];
+      return [...current.slice(0, -1), { ...last, content }];
     });
   }
 
-  async executeCommand(input: string) {
-    const trimmedInput = input.trim();
-    if (!trimmedInput) return;
+  public async execute(input: string): Promise<void> {
+    const rawInput = input.trim();
+    if (!rawInput) return;
 
-    // Log the user input
-    this.addLog('input', trimmedInput);
-    
-    // Add valid command to history (unless it's during input flow?)
-    // If inputCallback is active, maybe don't add to history? 
-    // Usually sensitive data like JDs shouldn't be in history.
-    if (this.inputCallback) {
-      this.inputCallback(input); // Pass raw input to preserve format if needed
-      this.inputCallback = null;
+    this.log('input', rawInput);
+
+    if (this.activeInputCallback) {
+      this.activeInputCallback(input);
+      this.activeInputCallback = null;
       return;
     }
 
-    // Add to history
-    this.commandHistory.push(trimmedInput);
-    this.historyIndex.set(this.commandHistory.length);
-
-    // Parse command
-    const parts = trimmedInput.split(' ');
-    const cmdName = parts[0].toLowerCase();
-    const args = parts.slice(1);
-
-    const command = this.commands.get(cmdName);
-
-    if (command) {
-      try {
-        await command.action(args);
-      } catch (error) {
-        this.addLog('error', `Execution failed: ${error}`);
-      }
-    } else {
-      this.addLog('error', 'System failure - command not found');
-    }
+    this.recordHistory(rawInput);
+    
+    const [commandTrigger, ...args] = rawInput.split(' ');
+    await this.dispatchCommand(commandTrigger.toLowerCase(), args);
   }
 
-  getCommandHistory(direction: 'up' | 'down'): string {
-    const currentIdx = this.historyIndex();
-    const max = this.commandHistory.length;
-    let newIdx = currentIdx;
+  public navigateHistory(direction: 'up' | 'down'): string {
+    const historyLen = this.commandHistory.length;
+    if (historyLen === 0) return '';
 
-    if (direction === 'up') {
-      newIdx = Math.max(0, currentIdx - 1);
-    } else {
-      newIdx = Math.min(max, currentIdx + 1);
-    }
+    const currentIdx = this.historyIndex();
+    const newIdx = direction === 'up' 
+      ? Math.max(0, currentIdx - 1)
+      : Math.min(historyLen, currentIdx + 1);
 
     this.historyIndex.set(newIdx);
-    
-    if (newIdx === max) return '';
+
+    if (newIdx === historyLen) return '';
     return this.commandHistory[newIdx] || '';
   }
 
-  private initializeInfoHandlers() {
-    this.infoHandlers.set('about', async () => {
-      const profile = await firstValueFrom(this.portfolioService.getProfile());
-      return [
-        `IDENTITY: ${profile.name}`,
-        `ROLE: ${profile.role}`,
-        `LOC: ${profile.location}`,
-        `BIO: ${profile.shortBio}`
+  private initialize(): void {
+    this.registerInfoModules();
+    this.registerCommands();
+    this.displayWelcomeMessage();
+  }
+
+  private displayWelcomeMessage(): void {
+    const helpTrigger = TERMINAL_CONFIG.commands[TerminalCommandId.Help].trigger;
+    TERMINAL_CONFIG.system.welcomeMessages.forEach(msg => {
+      this.log('system', msg.replace('{help}', helpTrigger));
+    });
+  }
+
+  private recordHistory(input: string): void {
+    this.commandHistory.push(input);
+    this.historyIndex.set(this.commandHistory.length);
+  }
+
+  private registerCommands(): void {
+    const config = TERMINAL_CONFIG.commands;
+
+    this.register(config[TerminalCommandId.Help], () => this.handleHelp());
+    this.register(config[TerminalCommandId.Clear], () => this.logs.set([]));
+    this.register(config[TerminalCommandId.Exit], () => this.isOpen.set(false));
+    this.register(config[TerminalCommandId.Kill], (args) => this.handleKill(args));
+
+    this.register(config[TerminalCommandId.Info], (args) => this.handleInfo(args));
+    this.register(config[TerminalCommandId.Ai], (args) => this.handleAi(args));
+    this.register(config[TerminalCommandId.Fit], (args) => this.handleFit(args));
+  }
+
+  private register(def: CommandDefinition, action: (args: string[]) => void | Promise<void>): void {
+    this.commands.set(def.trigger.toLowerCase(), {
+      command: def.trigger,
+      description: def.description,
+      category: def.category,
+      action
+    });
+  }
+
+  private async dispatchCommand(trigger: string, args: string[]): Promise<void> {
+    const cmd = this.commands.get(trigger);
+    
+    if (!cmd) {
+      this.log('error', TERMINAL_CONFIG.messages.commandNotFound);
+      return;
+    }
+
+    try {
+      await cmd.action(args);
+    } catch (error) {
+      this.log('error', `Execution failed: ${error}`);
+    }
+  }
+
+  private async promptToUser(message: string): Promise<string> {
+    this.log('system', message);
+    return new Promise<string>(resolve => {
+      this.activeInputCallback = resolve;
+    });
+  }
+
+  private handleHelp(): void {
+    const all = Array.from(this.commands.values());
+    const group = (category: CommandCategory) => all.filter(c => c.category === category);
+    
+    const format = (list: TerminalCommand[]) => 
+      list.map(c => `  ${c.command.padEnd(10)} - ${c.description}`).join('\n');
+
+    const output = [
+      'Available Commands:\n',
+      'PORTFOLIO COMMANDS:',
+      format(group('portfolio')),
+      '\nSYSTEM COMMANDS:',
+      format(group('system'))
+    ].join('\n');
+
+    this.log('output', output);
+  }
+
+  private async handleKill(args: string[]): Promise<void> {
+    const secondsArg = args[0] === '--seconds' && args[1] ? parseInt(args[1], 10) : 3;
+    let seconds = secondsArg || 3;
+
+    this.log('system', 'System shutdown initiated...');
+    
+    while (seconds > 0) {
+      this.log('system', `Reboot in ${seconds}...`);
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      seconds--;
+    }
+    
+    window.location.reload();
+  }
+
+  private async handleInfo(args: string[]): Promise<void> {
+    const moduleName = args[0]?.toLowerCase().replace(/^--/, '');
+    
+    if (moduleName && this.infoHandlers.has(moduleName)) {
+      const handler = this.infoHandlers.get(moduleName)!;
+      const data = await handler();
+      this.log('output', data);
+    } else {
+      const list = Array.from(this.infoHandlers.keys()).map(k => `--${k}`).join(', ');
+      this.log('error', `${TERMINAL_CONFIG.messages.usagePrefix}info --<module>\nAvailable: ${list}`);
+    }
+  }
+
+  private async handleAi(args: string[]): Promise<void> {
+    if (args.length === 0) {
+      this.log('error', `${TERMINAL_CONFIG.messages.usagePrefix}ai <question>`);
+      return;
+    }
+
+    if (args[0] === '--info') {
+      this.log('system', 'AI Assistant v2.0 powered by Gemini Pro (Mock).');
+      return;
+    }
+
+    const query = args.join(' ');
+    this.log('system', 'Processing query<span class="loading-dots"><span>.</span><span>.</span><span>.</span></span>');
+    
+    try {
+      const response = await this.aiService.processQuery(query);
+      this.updateLastLog('Processing query... ' + TERMINAL_CONFIG.messages.done);
+      this.log('ai', response);
+    } catch (err: any) {
+      this.updateLastLog('Processing query... ' + TERMINAL_CONFIG.messages.failed);
+      this.log('error', `AI Error: ${err.message || err}`);
+    }
+  }
+
+  private async handleFit(args: string[]): Promise<void> {
+    if (args.length === 0) {
+      this.log('error', `${TERMINAL_CONFIG.messages.usagePrefix}fit-analyze <job description text>`);
+      return;
+    }
+
+    const jdText = args.join(' ');
+
+    this.log('system', 'Analyzing data<span class="loading-dots"><span>.</span><span>.</span><span>.</span></span>');
+    try {
+      const result = await this.jobAnalyzer.analyze(jdText);
+      this.updateLastLog('Analyzing data... ' + TERMINAL_CONFIG.messages.done);
+      
+      const report = [
+        '\n>> FIT ANALYSIS REPORT <<',
+        `MATCH SCORE: ${result.score}%`,
+        `REQ SKILLS COVERAGE: ${result.requiredSkillsCoverage}%`,
+        `CONCLUSION:\n${result.conclusion}`
       ].join('\n');
+      
+      this.log('ai', report);
+      
+      const exportAnswer = await this.promptToUser('Do you want to export the result? (y/n)');
+      if (exportAnswer.toLowerCase().startsWith('y')) {
+        this.downloadFile(`fit_analysis_${new Date().toISOString().split('T')[0]}.txt`, JSON.stringify(result, null, 2));
+        this.log('system', 'Report downloaded.');
+      }
+    } catch (e) {
+      this.log('error', 'Analysis Error: ' + e);
+    }
+  }
+
+  private registerInfoModules(): void {
+    this.registerInfoHandler('about', async () => {
+      const p = await firstValueFrom(this.portfolioService.getProfile());
+      return `IDENTITY: ${p.name}\nROLE: ${p.role}\nBIO: ${p.shortBio}`;
     });
 
-    this.infoHandlers.set('projects', async () => {
-      const projects = await firstValueFrom(this.portfolioService.getProjects());
-      const list = projects.map((p, i) => `[${i + 1}] ${p.title}: ${p.description}`).join('\n');
-      return `PROJECT_ARCHIVES:\n${list}`;
+    this.registerInfoHandler('projects', async () => {
+      const list = await firstValueFrom(this.portfolioService.getProjects());
+      return 'PROJECT_ARCHIVES:\n' + list.map((p, i) => `[${i + 1}] ${p.title}`).join('\n');
     });
 
-    this.infoHandlers.set('skills', async () => {
-      const skills = await firstValueFrom(this.portfolioService.getSkills());
-      const output = skills.map(cat => `\n${cat.name.toUpperCase()}:\n  ${cat.skills.join(', ')}`).join('');
-      return `SKILL_MATRIX:${output}`;
+    this.registerInfoHandler('skills', async () => {
+      const valid = await firstValueFrom(this.portfolioService.getSkills());
+      return 'SKILL_MATRIX:\n' + valid.map(c => `${c.name}: ${c.skills.join(', ')}`).join('\n');
     });
 
-    this.infoHandlers.set('contact', async () => {
-      const profile = await firstValueFrom(this.portfolioService.getProfile());
-      const output = [
-        `EMAIL: ${profile.email}`,
-        `LINKEDIN: ${profile.linkedin}`,
-        `GITHUB: ${profile.github}`,
-        profile.devto ? `DEV.TO: ${profile.devto}` : '',
-        profile.blog ? `BLOG: ${profile.blog}` : ''
-      ].filter(Boolean).join('\n');
-      return `COMM_CHANNELS:\n${output}`;
+    this.registerInfoHandler('contact', async () => {
+      const p = await firstValueFrom(this.portfolioService.getProfile());
+      return `EMAIL: ${p.email}\nLINKEDIN: ${p.linkedin}\nGITHUB: ${p.github}`;
     });
   }
 
-  private registerCoreCommands() {
-    // HELP
-    this.register('help', 'Displays a list of available commands', 'system', () => {
-      const commands = Array.from(this.commands.values());
-      const portfolioCmds = commands.filter(c => c.category === 'portfolio');
-      const systemCmds = commands.filter(c => c.category === 'system');
-
-      let output = 'Available Commands:\n\n';
-
-      output += 'PORTFOLIO COMMANDS:\n';
-      output += portfolioCmds.map(c => `  ${c.command.padEnd(10)} - ${c.description}`).join('\n');
-      
-      output += '\n\nSYSTEM COMMANDS:\n';
-      output += systemCmds.map(c => `  ${c.command.padEnd(10)} - ${c.description}`).join('\n');
-
-      this.addLog('output', output);
-    });
-
-    // CLEAR
-    this.register('clear', 'Clears terminal output', 'system', () => {
-      this.logs.set([]);
-    });
-
-    // EXIT
-    this.register('exit', 'Closes the terminal modal', 'system', () => {
-      this.isOpen.set(false);
-    });
-
-    // INFO
-    this.register('info', 'Access portfolio data modules. Usage: info --<module>\n             Ex: "info --projects" or "info --contact"\n             Modules: ' + Array.from(this.infoHandlers.keys()).map(k => '--' + k).join(', '), 'portfolio', async (args) => {
-      const rawArg = args[0]?.toLowerCase();
-      
-      if (!rawArg) {
-         const available = Array.from(this.infoHandlers.keys()).map(k => '--' + k).join(', ');
-         this.addLog('error', `Usage: info --<module>\nAvailable modules: ${available}`);
-         return;
-      }
-
-      if (!rawArg.startsWith('--')) {
-         this.addLog('error', 'Syntax Error: Arguments must be prefixed with "--".\nExample: info --' + rawArg);
-         return;
-      }
-
-      const subCommand = rawArg.substring(2);
-      
-      if (this.infoHandlers.has(subCommand)) {
-        const handler = this.infoHandlers.get(subCommand)!;
-        const output = await handler();
-        this.addLog('output', output);
-      } else {
-        const available = Array.from(this.infoHandlers.keys()).map(k => '--' + k).join(', ');
-        this.addLog('error', `Unknown module: ${subCommand}\nAvailable modules: ${available}`);
-      }
-    });
-
-    // KILL
-    this.register('kill', 'Reloads the system. Usage: kill --seconds 3', 'system', async (args) => {
-      let seconds = 3; // Default
-
-      if (args.length > 0) {
-        if (args[0] === '--seconds' && args[1]) {
-           const parsed = parseInt(args[1], 10);
-           if (!isNaN(parsed) && parsed > 0) {
-             seconds = parsed;
-           } else {
-             this.addLog('error', 'Invalid time argument. Using default 3 seconds.');
-           }
-        } else {
-           this.addLog('error', 'Usage: kill --seconds <number>');
-           return;
-        }
-      }
-
-      this.addLog('system', 'System shutdown initiated...');
-      
-      for (let i = seconds; i > 0; i--) {
-        this.addLog('system', `Reboot in ${i}...`);
-        await new Promise(resolve => setTimeout(resolve, 1000));
-      }
-      
-      window.location.reload();
-    });
-
-    // AI
-    this.register('ai', 'Query the AI Assistant.\n             Ex: "ai What is the tech stack in your projects?"', 'portfolio', async (args) => {
-      if (args.length === 0) {
-        this.addLog('error', 'Usage: ai <question>');
-        return;
-      }
-      this.addLog('system', 'Processing query<span class="loading-dots"><span>.</span><span>.</span><span>.</span></span>');
-      try {
-        const response = await this.aiService.processQuery(args.join(' '));
-        this.replaceLastLog('Processing query... Done.');
-        this.addLog('ai', response);
-      } catch (err: any) {
-        this.replaceLastLog('Processing query... Failed.');
-        this.addLog('error', `AI Access Failed: ${err.message || err}`);
-      }
-    });
-
-    // FIT ANALYZER
-    this.register('fit', 'Job Fit Analyzer. Usage: fit analyze', 'portfolio', async (args) => {
-      if (!args[0] || args[0] !== 'analyze') {
-        this.addLog('error', 'Usage: fit analyze');
-        return;
-      }
-      
-      const jd = await this.promptInput('Paste Job Description below (single line or block):');
-      if (!jd) {
-          this.addLog('system', 'Analysis cancelled (empty input).');
-          return;
-      }
-
-      this.addLog('system', 'Analyzing data<span class="loading-dots"><span>.</span><span>.</span><span>.</span></span>');
-      
-      try {
-        const result = await this.jobAnalyzer.analyze(jd);
-        this.replaceLastLog('Analyzing data... Done.');
-        
-        let report = `\n>> FIT ANALYSIS REPORT <<\n`;
-        report += `MATCH SCORE: ${result.score}%\n`;
-        report += `REQ SKILLS COVERAGE: ${result.requiredSkillsCoverage}%\n`;
-        report += `NICE-TO-HAVE COVERAGE: ${result.niceToHaveSkillsCoverage}%\n\n`;
-        
-        report += `STRENGTHS:\n${result.strengths.map(s => `+ ${s}`).join('\n')}\n\n`;
-        report += `GAPS:\n${result.gaps.map(g => `- ${g}`).join('\n')}\n\n`;
-        report += `CONCLUSION:\n${result.conclusion}`;
-        
-        this.addLog('ai', report);
-        
-        const doExport = await this.promptInput('Do you want to export the result? (y/n)');
-        if (doExport.toLowerCase().startsWith('y')) {
-             const format = await this.promptInput('Format (txt/md)?');
-             if (format === 'txt' || format === 'md') {
-                this.downloadReport(result, format);
-                this.addLog('system', 'Report downloaded.');
-             } else {
-                this.addLog('error', 'Invalid format. Export cancelled.');
-             }
-        }
-      } catch (e) {
-         this.addLog('error', 'Analysis Error: ' + e);
-      }
-    });
+  private registerInfoHandler(key: string, handler: () => Promise<string>): void {
+    this.infoHandlers.set(key, handler);
   }
 
-  private register(command: string, description: string, category: 'portfolio' | 'system', action: (args: string[]) => void | Promise<void>) {
-    this.commands.set(command, { command, description, category, action });
-  }
-
-  private promptInput(prompt: string): Promise<string> {
-    this.addLog('system', prompt);
-    return new Promise(resolve => {
-        this.inputCallback = resolve;
-    });
-  }
-
-  private downloadReport(result: any, format: 'txt' | 'md') {
-      const date = new Date().toISOString().split('T')[0];
-      const filename = `fit_analysis_${date}.${format}`;
-      let content = '';
-
-      if (format === 'md') {
-          content = `# Job Fit Analysis Report\nDate: ${date}\n\n`;
-          content += `## Score: ${result.score}%\n`;
-          content += `**Required Skills Coverage**: ${result.requiredSkillsCoverage}%\n`;
-          content += `**Nice-to-Have Coverage**: ${result.niceToHaveSkillsCoverage}%\n\n`;
-          content += `### Strengths\n${result.strengths.map((s: string) => `- ${s}`).join('\n')}\n\n`;
-          content += `### Gaps\n${result.gaps.map((g: string) => `- ${g}`).join('\n')}\n\n`;
-          content += `### Conclusion\n${result.conclusion}\n`;
-      } else {
-          content = `JOB FIT ANALYSIS REPORT\nDate: ${date}\n\n`;
-          content += `SCORE: ${result.score}%\n`;
-          content += `REQ SKILLS: ${result.requiredSkillsCoverage}%\n`;
-          content += `STRENGTHS:\n${result.strengths.map((s: string) => `- ${s}`).join('\n')}\n\n`;
-          content += `GAPS:\n${result.gaps.map((g: string) => `- ${g}`).join('\n')}\n\n`;
-          content += `CONCLUSION:\n${result.conclusion}\n`;
-      }
-
+  private downloadFile(filename: string, content: string): void {
+    try {
       const blob = new Blob([content], { type: 'text/plain' });
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -339,5 +278,9 @@ export class TerminalService {
       a.download = filename;
       a.click();
       window.URL.revokeObjectURL(url);
+    } catch (e) {
+      console.error('Download failed', e);
+      this.log('error', 'Download not supported in this environment.');
+    }
   }
 }

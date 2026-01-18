@@ -1,110 +1,88 @@
 import { Injectable } from '@angular/core';
-import { AiService } from './ai.service';
-import { PortfolioService } from './portfolio.service';
-import { FitAnalysisResult, SkillMatch } from '../models/job-fit.models';
+import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 
-// --- Configuration ---
-// Easily extendable weights and heuristics
-export const SCORING_RULES = {
-  skills: {
-    required: {
-      matchBase: 10,
-      inProjectsBonus: 5,
-      expertBonus: 5,    // Bonus for appearing in >= expertProjectThreshold
-      missingPenalty: 5, // Reduced penalty slightly
-      maxPoints: 10      // Set to equal matchBase. Bonuses allow score > 100% to offset gaps.
-    },
-    niceToHave: {
-      matchBase: 5,
-      missingPenalty: 0, 
-      maxPoints: 5
-    },
-    expertProjectThreshold: 3
-  },
-  experience: {
-    maxScore: 15,
-    pointPerYear: 1,
-    penaltyPerMissingYear: 2
-  },
-  responsibilities: {
-    keywordMatchScore: 5 // Pure bonus points (does not contribute to max score denominator)
-  },
-  thresholds: {
-    exceptional: 95, 
-    strong: 85,
-    moderate: 65,
-    partial: 40
-  }
-};
+import { AiService } from './ai.service';
+import { PortfolioService } from './portfolio.service';
+import { StringSimilarity } from '../utils/string-similarity.util';
+import { FitAnalysisResult, ScoringConfig, SkillMatch, SkillScoringRule } from '../models/job-fit.models';
+
+interface PortfolioContext {
+  allSkills: Set<string>;
+  projects: SearchableProject[];
+  userYears: number;
+}
+
+interface SearchableProject {
+  title: string;
+  description: string;
+  tech: string[];
+}
+
+interface EvaluationResult {
+  totalScore: number;
+  maxPossible: number;
+  matches: SkillMatch[];
+}
 
 @Injectable({ providedIn: 'root' })
 export class JobAnalyzerService {
-  private readonly rules = SCORING_RULES;
+  private rules!: ScoringConfig;
 
   constructor(
+    private http: HttpClient,
     private aiService: AiService,
     private portfolioService: PortfolioService
   ) {}
 
+  /**
+   * Main entry point for analyzing a job description against the user's portfolio.
+   * @param jobDescription Raw text of the JD
+   */
   async analyze(jobDescription: string): Promise<FitAnalysisResult> {
-    // 1. Data Gathering
-    // Parallel fetch for parsing and Portfolio data
+    await this.ensureConfigLoaded();
+
+    // 1. Parallel Data Fetching
     const [jdData, context] = await Promise.all([
       this.aiService.parseJobDescription(jobDescription),
       this.buildPortfolioContext()
     ]);
 
-    // 2. Evaluation
+    // 2. Skill Evaluation
     const requiredEval = this.evaluateSkills(
-      jdData.requiredSkills || [], 
-      context.allSkills, 
-      context.projects, 
-      'required'
+      jdData.requiredSkills || [],
+      context,
+      this.rules.skills.required,
+      true // Enable deep project analysis for required skills
     );
 
     const niceToHaveEval = this.evaluateSkills(
-      jdData.niceToHaveSkills || [], 
-      context.allSkills, 
-      context.projects, 
-      'nice'
+      jdData.niceToHaveSkills || [],
+      context,
+      this.rules.skills.niceToHave,
+      false
     );
 
+    // 3. Experience & Responsibility Evaluation
     const experienceEval = this.evaluateExperience(
-      jdData.yearsExperience || 0, 
+      jdData.yearsExperience || 0,
       context.userYears
     );
 
     const projectEval = this.evaluateProjectRelevance(
-      jdData.keyResponsibilities || [], 
+      jdData.keyResponsibilities || [],
       context.projects
     );
 
-    // 3. Score Aggregation
-    const totalCurrentScore = 
-      requiredEval.totalScore + 
-      niceToHaveEval.totalScore + 
-      experienceEval.score + 
-      projectEval.totalScore;
+    // 4. Final Score Calculation
+    const { finalPercent, reqCoverage, niceCoverage } = this.calculateAggregateScores(
+      requiredEval,
+      niceToHaveEval,
+      experienceEval,
+      projectEval
+    );
 
-    const totalMaxScore = 
-      requiredEval.maxPossible + 
-      niceToHaveEval.maxPossible + 
-      experienceEval.maxScore + 
-      projectEval.maxPossible;
-      
-    // Prevent division by zero and calculate percentage
-    const finalMax = Math.max(totalMaxScore, 1);
-    let finalPercent = Math.round((totalCurrentScore / finalMax) * 100);
-    
-    // Clamp 0-100
-    finalPercent = Math.max(0, Math.min(100, finalPercent));
-
-    // Pre-calculate coverage for logic usage
-    const reqCoverage = this.calculateCoverage(requiredEval.matches);
-    const niceCoverage = this.calculateCoverage(niceToHaveEval.matches);
-
-    // 4. Result Construction
+    // 5. Construct Final Report
     return {
       score: finalPercent,
       requiredSkillsCoverage: reqCoverage,
@@ -113,10 +91,10 @@ export class JobAnalyzerService {
       requiredMatches: requiredEval.matches,
       niceToHaveMatches: niceToHaveEval.matches,
       
-      experienceMatch: { 
-        required: jdData.yearsExperience || 0, 
-        actual: context.userYears, 
-        score: experienceEval.score 
+      experienceMatch: {
+        required: jdData.yearsExperience || 0,
+        actual: context.userYears,
+        score: experienceEval.totalScore
       },
       
       projectRelevance: projectEval.matches,
@@ -127,92 +105,111 @@ export class JobAnalyzerService {
     };
   }
 
-  // --- Core Evaluation Logic ---
+  private async ensureConfigLoaded() {
+    if (!this.rules) {
+      this.rules = await firstValueFrom(this.http.get<ScoringConfig>('data/job-scoring.config.json'));
+    }
+  }
 
-  private async buildPortfolioContext() {
+  // --- 1. Data Context Builder ---
+
+  private async buildPortfolioContext(): Promise<PortfolioContext> {
     const profile = await firstValueFrom(this.portfolioService.getProfile());
     const projects = await firstValueFrom(this.portfolioService.getProjects());
-    const skillsCats = await firstValueFrom(this.portfolioService.getSkills());
+    const skillCategories = await firstValueFrom(this.portfolioService.getSkills());
 
-    // Flatten all skills for quick lookup
+    // Flatten skills for O(1) lookups
     const allSkills = new Set<string>();
-    skillsCats.forEach(c => c.skills.forEach(s => allSkills.add(s.toLowerCase())));
-    
-    // Project Searchability
-    const searchReadyProjects = projects.map(p => ({
+    skillCategories.forEach(cat => 
+      cat.skills.forEach(skill => allSkills.add(skill.toLowerCase()))
+    );
+
+    // Pre-process projects for text search
+    const searchableProjects: SearchableProject[] = projects.map(p => ({
       title: p.title,
       description: p.description.toLowerCase(),
       tech: p.technologies.map(t => t.toLowerCase())
     }));
 
-    // Add project techs to main skills set
-    searchReadyProjects.forEach(p => p.tech.forEach(t => allSkills.add(t)));
+    // Ensure all project technologies are also considered "known skills"
+    searchableProjects.forEach(p => p.tech.forEach(t => allSkills.add(t)));
 
-    // Extract Years of Experience
+    // Parse Experience Years safely
     let userYears = 0;
-    const yearStat = profile.stats?.find(s => 
-      s.label.toLowerCase().includes('experience') || s.label.toLowerCase().includes('years')
+    const expStat = profile.stats?.find(s => 
+      /experience|years/i.test(s.label)
     );
-    
-    if (yearStat) {
-       const match = yearStat.value.match(/\d+/);
-       userYears = match ? parseInt(match[0], 10) : 0;
+
+    if (expStat && /\d+/.test(expStat.value)) {
+      userYears = parseInt(expStat.value.match(/\d+/)![0], 10);
     } else {
-       const bioMatch = profile.shortBio.match(/(\d+)\+?\s*years/i);
-       userYears = bioMatch ? parseInt(bioMatch[1], 10) : 5; 
+      // Fallback to bio scraping or default
+      const bioMatch = profile.shortBio.match(/(\d+)\+?\s*years/i);
+      userYears = bioMatch ? parseInt(bioMatch[1], 10) : 5;
     }
 
-    return { allSkills, projects: searchReadyProjects, userYears };
+    return { allSkills, projects: searchableProjects, userYears };
   }
 
+  // --- 2. Core Evaluators ---
+
   private evaluateSkills(
-    jdSkills: string[], 
-    portfolioSkills: Set<string>, 
-    projects: { tech: string[] }[], 
-    type: 'required' | 'nice'
-  ) {
+    targetSkills: string[],
+    context: PortfolioContext,
+    rule: SkillScoringRule,
+    checkProjectUsage: boolean
+  ): EvaluationResult {
     let totalScore = 0;
     let maxPossible = 0;
     const matches: SkillMatch[] = [];
-    
-    const isRequired = type === 'required';
-    const rules = isRequired ? this.rules.skills.required : this.rules.skills.niceToHave;
-    const reqRules = this.rules.skills.required; 
-    
-    for (const skill of jdSkills) {
-      const { found, matchQuality } = this.findSkillMatch(skill, portfolioSkills);
-      let skillScore = 0;
-      let source: 'profile' | 'projects' | 'missing' = 'missing';
 
-      if (found) {
-        // Adjust score based on match quality
-        const qualityMultiplier = matchQuality === 'strong' ? 1.0 : 0.7; // Moderate = 70% points
-        skillScore += (rules.matchBase * qualityMultiplier);
+    for (const skill of targetSkills) {
+      const matchResult = StringSimilarity.findBestMatch(
+        skill, 
+        context.allSkills,
+        this.rules.similarityThresholds
+      );
+      let skillScore = 0;
+      let source: SkillMatch['source'] = 'missing';
+
+      // Base Score Logic
+      if (matchResult.found) {
+        // Apply multiplier (1.0 for Strong, 0.7 for Moderate)
+        const qualityMultiplier = matchResult.matchQuality === 'strong' ? 1.0 : 0.7;
+        skillScore += (rule.matchBase * qualityMultiplier);
         source = 'profile';
       } else {
-        skillScore -= rules.missingPenalty;
+        skillScore -= rule.missingPenalty;
       }
 
-      if (isRequired) {
-         const projectCount = projects.filter(p => this.findSkillMatch(skill, new Set(p.tech)).found).length;
-         
-         if (projectCount > 0) {
-             skillScore += reqRules.inProjectsBonus;
-             source = 'projects';
-         }
-         
-         if (projectCount >= this.rules.skills.expertProjectThreshold) {
-             skillScore += reqRules.expertBonus;
-         }
+      // Advanced Project Analysis (for Required Skills)
+      if (checkProjectUsage && rule.inProjectsBonus !== undefined) {
+        // Check if skill appears in specific projects
+        const projectsWithSkill = context.projects.filter(p => 
+          StringSimilarity.findBestMatch(
+            skill, 
+            new Set(p.tech),
+            this.rules.similarityThresholds
+          ).found
+        ).length;
+
+        if (projectsWithSkill > 0) {
+          skillScore += rule.inProjectsBonus;
+          source = 'projects';
+        }
+
+        if (rule.expertBonus && projectsWithSkill >= this.rules.skills.expertProjectThreshold) {
+          skillScore += rule.expertBonus;
+        }
       }
 
       totalScore += skillScore;
-      maxPossible += rules.maxPoints;
+      maxPossible += rule.maxPoints;
 
       matches.push({
         skill,
-        found,
-        source: found ? source : 'missing',
+        found: matchResult.found,
+        source: matchResult.found ? source : 'missing',
         weight: skillScore
       });
     }
@@ -220,194 +217,133 @@ export class JobAnalyzerService {
     return { totalScore, maxPossible, matches };
   }
 
-  private evaluateExperience(required: number, actual: number) {
-    const r = this.rules.experience;
+  private evaluateExperience(required: number, actual: number): { totalScore: number; maxScore: number } {
+    const rules = this.rules.experience;
     const diff = actual - required;
-    
-    // Start with points per year up to max
-    let score = Math.min(actual * r.pointPerYear, r.maxScore);
 
-    // Apply penalty if under-qualified
+    // Linear points up to cap
+    let score = Math.min(actual * rules.pointPerYear, rules.maxScore);
+
+    // Apply strict penalty for experience gap
     if (diff < 0) {
-      score -= Math.abs(diff) * r.penaltyPerMissingYear;
+      score -= Math.abs(diff) * rules.penaltyPerMissingYear;
     }
 
-    return { score, maxScore: r.maxScore };
+    return { totalScore: score, maxScore: rules.maxScore };
   }
 
-  private evaluateProjectRelevance(responsibilities: string[], projects: { title: string, description: string }[]) {
-     let totalScore = 0;
-     let maxPossible = 0;
-     const matches: { projectName: string; relevanceScore: number; reason: string; }[] = [];
+  private evaluateProjectRelevance(
+    responsibilities: string[],
+    projects: SearchableProject[]
+  ) {
+    let totalScore = 0;
+    // Note regarding Max Score: Responsibilities are treated as pure bonuses.
+    // They add to the Numerator but do not increase the Denominator (Max Possible),
+    // effectively allowing them to offset penalties from missing skills.
+    const maxPossible = 0; 
+    
+    const matches: { projectName: string; relevanceScore: number; reason: string }[] = [];
+    
+    // Stop words to ignore during keyword extraction
+    const STOP_WORDS = new Set([
+      'manage', 'develop', 'create', 'ensure', 'system', 'software', 
+      'working', 'using', 'application', 'provide', 'with', 'the', 
+      'and', 'for', 'experience', 'knowledge', 'team', 'support'
+    ]);
 
-     const stopWords = new Set(['manage', 'develop', 'create', 'ensure', 'system', 'software', 'working', 'using', 'application', 'provide', 'with', 'the', 'and', 'for', 'experience', 'knowledge']);
+    for (const resp of responsibilities) {
+      // Extract significant keywords (> 3 chars, not stop words)
+      const keywords = resp.toLowerCase()
+        .replace(/[^\w\s]/g, '')
+        .split(/\s+/)
+        .filter(w => w.length > 3 && !STOP_WORDS.has(w));
 
-     for (const resp of responsibilities) {
-        // maxPossible += this.rules.responsibilities.keywordMatchScore; // Disabled: Responsibilities are now pure bonus
+      if (keywords.length === 0) continue;
 
-        const keywords = resp.toLowerCase()
-            .replace(/[^\w\s]/g, '')
-            .split(/\s+/)
-            .filter(w => w.length > 3 && !stopWords.has(w));
+      // Find first project that matches any valuable keyword
+      for (const proj of projects) {
+        const matchedKeywords = keywords.filter(k => 
+          proj.description.includes(k) || proj.title.toLowerCase().includes(k)
+        );
 
-        if (keywords.length === 0) continue;
-
-        for (const proj of projects) {
-            const matchCount = keywords.filter(k => 
-                proj.description.includes(k) || proj.title.toLowerCase().includes(k)
-            ).length;
-
-            if (matchCount > 0) {
-                const score = this.rules.responsibilities.keywordMatchScore;
-                totalScore += score;
-                matches.push({
-                    projectName: proj.title,
-                    relevanceScore: score,
-                    reason: `Matches keywords: ${keywords.slice(0, 3).join(', ')}`
-                });
-                break;
-            }
+        if (matchedKeywords.length > 0) {
+          const score = this.rules.responsibilities.keywordMatchScore;
+          totalScore += score;
+          
+          matches.push({
+            projectName: proj.title,
+            relevanceScore: score,
+            reason: `Matches keywords: ${matchedKeywords.slice(0, 3).join(', ')}`
+          });
+          
+          // Only count one project match per responsibility line to avoid double dipping
+          break; 
         }
-     }
+      }
+    }
 
-     return { totalScore, maxPossible, matches };
+    return { totalScore, maxPossible, matches };
   }
 
-  // --- Utilities ---
+  // --- 3. Utilities & Aggregation ---
 
-  private findSkillMatch(target: string, available: Set<string>): { found: boolean; matchedTerm?: string; matchQuality?: 'strong' | 'moderate' | 'weak' } {
-    const normalizedTarget = target.toLowerCase().trim();
+  private calculateAggregateScores(
+    req: EvaluationResult,
+    nice: EvaluationResult,
+    exp: { totalScore: number; maxScore: number },
+    proj: { totalScore: number; maxPossible: number }
+  ) {
+    const totalCurrentScore = req.totalScore + nice.totalScore + exp.totalScore + proj.totalScore;
+    const totalMaxScore = req.maxPossible + nice.maxPossible + exp.maxScore + proj.maxPossible;
+
+    // Prevent division by zero
+    const finalMax = Math.max(totalMaxScore, 1);
     
-    // 1. Direct Match (Strong)
-    if (available.has(normalizedTarget)) {
-      return { found: true, matchedTerm: normalizedTarget, matchQuality: 'strong' };
-    }
+    // Calculate and Clamp (0-100)
+    const rawPercent = (totalCurrentScore / finalMax) * 100;
+    const finalPercent = Math.max(0, Math.min(100, Math.round(rawPercent)));
 
-    // 2. Levenshtein / Similarity Check
-    let bestMatch: string | null = null;
-    let bestScore = 0;
-
-    for (const skill of available) {
-        const score = this.calculateSimilarity(normalizedTarget, skill);
-        if (score > bestScore) {
-            bestScore = score;
-            bestMatch = skill;
-        }
-    }
-
-    if (bestScore > 0.8) {
-        return { found: true, matchedTerm: bestMatch!, matchQuality: 'strong' };
-    } 
-    
-    if (bestScore >= 0.6) {
-        // Moderate match (e.g., .NET vs .NET Core)
-        return { found: true, matchedTerm: bestMatch!, matchQuality: 'moderate' };
-    }
-
-    return { found: false, matchQuality: 'weak' };
+    return {
+      finalPercent,
+      reqCoverage: this.calculateCoveragePercentage(req.matches),
+      niceCoverage: this.calculateCoveragePercentage(nice.matches)
+    };
   }
 
-  // Jaro-Winkler distance for short text similarity (better for skill names than simple Levenshtein)
-  private calculateSimilarity(s1: string, s2: string): number {
-    let m = 0;
-    
-    // Exit early if no match possible
-    if (s1.length === 0 || s2.length === 0) return 0;
-    if (s1 === s2) return 1;
-
-    const range = (Math.floor(Math.max(s1.length, s2.length) / 2)) - 1;
-    const s1Matches = new Array(s1.length).fill(false);
-    const s2Matches = new Array(s2.length).fill(false);
-
-    for (let i = 0; i < s1.length; i++) {
-        const low = (i >= range) ? i - range : 0;
-        const high = (i + range <= s2.length - 1) ? i + range : s2.length - 1;
-
-        for (let j = low; j <= high; j++) {
-        if (s2Matches[j] !== true && s2[j] === s1[i]) {
-            m++;
-            s1Matches[i] = true;
-            s2Matches[j] = true;
-            break;
-        }
-        }
-    }
-
-    // If no matches, return 0
-    if (m === 0) return 0;
-
-    // Count transpositions
-    let k = 0;
-    let numTrans = 0;
-    for (let i = 0; i < s1.length; i++) {
-        if (s1Matches[i] === true) {
-        let j = k;
-        while (j < s2.length) {
-            if (s2Matches[j] === true) {
-            k = j + 1;
-            break;
-            }
-            j++;
-        }
-        if (s1[i] !== s2[j]) numTrans++;
-        }
-    }
-
-    let weight = (m / s1.length + m / s2.length + (m - (numTrans / 2)) / m) / 3;
-    
-    // Winkler modification: boost scores for strings that match at the beginning
-    let l = 0;
-    const p = 0.1;
-    if (weight > 0.7) {
-        while (s1[l] === s2[l] && l < 4) l++;
-        weight = weight + l * p * (1 - weight);
-    }
-    
-    return weight;
-  }
-
-  private calculateCoverage(matches: SkillMatch[]): number {
+  private calculateCoveragePercentage(matches: SkillMatch[]): number {
     if (!matches.length) return 0;
-    const found = matches.filter(m => m.found).length;
-    return Math.round((found / matches.length) * 100);
+    const foundCount = matches.filter(m => m.found).length;
+    return Math.round((foundCount / matches.length) * 100);
   }
 
   private extractStrengths(matches: SkillMatch[]): string[] {
     return matches
-        .filter(m => m.found)
-        .map(m => {
-            const isExpert = m.weight >= 15;
-            return `${m.skill} ${isExpert ? '(Expert)' : ''}`;
-        });
+      .filter(m => m.found)
+      .map(m => {
+        // 15 is the threshold for a "perfect" match (Base 10 + Bonus 5)
+        const isExpert = m.weight >= 15; 
+        return `${m.skill} ${isExpert ? '(Expert)' : ''}`;
+      });
   }
 
   private generateConclusion(score: number, reqCoverage: number): string {
-    const t = this.rules.thresholds;
-    
-    // Priority 1: Exceptional overall score
-    if (score >= t.exceptional) 
-      return "Exceptional fit. The candidate's profile strongly aligns with the core requirements.";
+    const config = this.rules.conclusions;
 
-    // Priority 2: High Required Skills Coverage (Overrides moderate overall score)
-    if (reqCoverage >= 85)
-      return "High Potential Match. Candidate possesses the majority of required technical skills, significantly offsetting other gaps.";
+    // 1. Check Priority Overrides (e.g., High Coverage)
+    for (const rule of config.overrides) {
+      if (rule.metric === 'reqCoverage' && reqCoverage >= rule.threshold) {
+        return rule.message;
+      }
+    }
 
-    // Priority 3: Strong overall score
-    if (score >= t.strong) 
-      return "Strong technical fit with identifiable and learnable gaps.";
-      
-    // Priority 4: Decent Required Skills Coverage
-    if (reqCoverage >= 70)
-        return "Qualified Match. Good alignment with core technical stack. Gaps may be seniority-related or domain-specific.";
+    // 2. Check Score Tiers
+    for (const tier of config.tiers) {
+      if (score >= tier.threshold) {
+        return tier.message;
+      }
+    }
 
-    // Priority 5: Moderate overall score
-    if (score >= t.moderate) 
-      return "Moderate fit. Some foundational skills are present, but specific gaps exist.";
-      
-    // Priority 6: Partial Match
-    if (score >= t.partial)
-        return "Partial Match. Candidate shares significant stack overlap but may require upskilling in key areas.";
-
-    return "Low match probability based on current portfolio data.";
+    // 3. Fallback
+    return config.defaultMessage;
   }
 }

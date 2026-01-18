@@ -3,11 +3,12 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { JobAnalyzerService } from '../../core/services/job-analyzer.service';
 import { FitAnalysisResult } from '../../core/models/job-fit.models';
+import { LoaderComponent } from '../../core/components/loader/loader.component';
 
 @Component({
   selector: 'app-job-fit',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, LoaderComponent],
   templateUrl: './job-fit.component.html',
   styleUrls: ['./job-fit.component.scss']
 })

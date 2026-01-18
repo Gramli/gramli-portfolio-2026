@@ -11,39 +11,12 @@
 // .page-title removed (shared strings in styles.scss)
 
 .contact-layout {
-    display: grid;
-    grid-template-columns: 2fr 1fr;
-    gap: 3rem;
+    display: flex;
+    justify-content: center;
+    padding: 2rem;
     
     @media (max-width: 768px) {
-        grid-template-columns: 1fr;
-        gap: 2rem;
-    }
-
-    @media (max-width: 360px) {
-        gap: 1.5rem;
-    }
-}
-
-/* -- Form Panel -- */
-.form-panel {
-    // Shared styles (background, padding, inputs, buttons) are in styles.scss
-
-    .instruction {
-        // Also shared, but if you want specific override:
-        margin-bottom: 2rem;
-    }
-
-    .form-group {
-        margin-bottom: 1.5rem;
-
-        label {
-            display: block;
-            font-family: var(--font-header);
-            font-size: 0.8rem;
-            color: var(--color-cyan);
-            margin-bottom: 0.5rem;
-        }
+        padding: 1rem;
     }
 }
 
@@ -51,28 +24,72 @@
 .info-panel {
     display: flex;
     flex-direction: column;
-    gap: 2rem;
+    gap: 1.5rem;
     padding-top: 2rem;
+    max-width: 600px;
+}
 
-    .info-item label {
-        display: block;
-        font-size: 0.8rem;
-        color: var(--color-text-muted);
-        text-transform: uppercase;
-        margin-bottom: 0.3rem;
-    }
+.info-item {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    
+    .item-icon {
+        width: 48px;
+        height: 48px;
+        flex-shrink: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(0, 243, 255, 0.05); /* Very subtle glow */
+        border: 1px solid var(--color-navy-light);
+        border-radius: 4px; /* Tech-like corners */
+        transition: all 0.3s ease;
 
-    .link {
-        color: var(--color-cyan-bright);
-        text-decoration: none;
-        font-family: monospace;
-        font-size: 1.1rem;
-        transition: text-shadow 0.3s;
-        word-break: break-all; /* Ensure links break on mobile */
+        svg {
+            width: 24px;
+            height: 24px;
+            fill: var(--color-cyan);
+            transition: fill 0.3s ease;
+        }
 
         &:hover {
-            text-shadow: 0 0 8px var(--color-cyan-bright);
-            text-decoration: underline;
+            border-color: var(--color-cyan);
+            box-shadow: 0 0 10px rgba(0, 243, 255, 0.2);
+            
+            svg {
+                fill: var(--color-cyan-bright);
+            }
+        }
+    }
+
+    .item-content {
+        flex: 1;
+        min-width: 0; /* Enable truncation if needed */
+        
+        label {
+            display: block;
+            font-size: 0.75rem;
+            color: var(--color-text-muted);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 0.25rem;
+            font-family: monospace;
+        }
+
+        .link {
+            display: block; // Ensures it respects truncation
+            color: var(--color-cyan-bright);
+            text-decoration: none;
+            font-family: monospace;
+            font-size: 1rem;
+            transition: text-shadow 0.3s;
+            word-break: break-all;
+
+            &:hover {
+                text-shadow: 0 0 8px var(--color-cyan-bright);
+                text-decoration: underline;
+            }
         }
     }
 }

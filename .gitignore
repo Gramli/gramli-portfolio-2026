@@ -45,5 +45,5 @@ Thumbs.db
 
 # Function files
 .vs
-/bin
-/obj
+bin
+obj

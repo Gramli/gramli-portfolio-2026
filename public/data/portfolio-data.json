@@ -1,16 +1,16 @@
 {
   "profile": {
     "name": "Daniel Balcarek",
-    "role": "System Architect",
+    "role": "Senior Software Engineer",
     "shortBio": "Specializing in modern web applications using .NET Core and Angular.",
     "longBio": "I am a Senior Software Engineer specializing in building modern web applications using .NET Core and Angular. I focus on solution architecture, design patterns, and SOLID principles to deliver applications that are maintainable, scalable, and easy to extend. My expertise spans backend development with C# and .NET Core, as well as frontend development with TypeScript and Angular.",
     "philosophy": "As a software craftsman, I actively follow new trends and best practices. I place strong emphasis on code quality, testing, and optimal test coverage ensuring long-term reliability.",
     "email": "contact@gramli.dev",
     "github": "https://github.com/gramli",
-    "linkedin": "https://linkedin.com/in/gramli",
+    "linkedin": "https://www.linkedin.com/in/daniel-balcarek/",
     "devto": "https://dev.to/gramli",
-    "blog": "https://blog.gramli.dev",
-    "location": "Digital Space",
+    "blog": "https://gramli.github.io/",
+    "location": "CZECH REPUBLIC",
     "avatarUrl": "assets/images/profile-avatar.svg",
     "stats": [
       { "value": "10+", "label": "Years Exp." },
@@ -28,6 +28,7 @@
       "solution": "Microservices architecture using .NET 8 and Azure Kubernetes Service.",
       "technologies": [".NET Core", "Angular", "Azure", "Docker", "Redis"],
       "role": "Lead Architect",
+      "type": "commercial",
       "status": "online",
       "sourceUrl": "https://github.com/gramli/nebula-erp"
     },
@@ -39,6 +40,7 @@
       "solution": "Event-driven architecture utilizing Apache Kafka and SignalR.",
       "technologies": ["C#", "SignalR", "Kafka", "React", "TimescaleDB"],
       "role": "Senior Backend Engineer",
+      "type": "personal",
       "status": "in-development",
       "sourceUrl": "https://github.com/gramli/quasar"
     },
@@ -50,6 +52,7 @@
       "solution": "SPA with complex state management using NgRx.",
       "technologies": ["Angular", "NgRx", "TypeScript", "RxJS", "Material"],
       "role": "Frontend Lead",
+      "type": "commercial",
       "status": "archived",
       "sourceUrl": "https://github.com/gramli/droid-cmd"
     },
@@ -61,6 +64,7 @@
       "solution": "SPA with complex state management using NgRx.",
       "technologies": ["Angular", "NgRx", "TypeScript", "RxJS", "Material"],
       "role": "Frontend Lead",
+      "type": "personal",
       "status": "archived",
       "sourceUrl": "https://github.com/gramli/droid-cmd"
     }
@@ -68,19 +72,19 @@
   "skills": [
     {
       "name": "Backend",
-      "skills": [".NET (Core)", "C#", "REST APIs", "SQL", "PostgreSQL", "Entity Framework"]
+      "skills": [".NET", "ASP.NET", "C#", "REST APIs", "SQL", "PostgreSQL", "Microsoft SQL Server", "Oracle", "Entity Framework"]
     },
     {
       "name": "Frontend",
-      "skills": ["Angular", "TypeScript", "RxJS", "SCSS", "State Management"]
+      "skills": ["Angular", "TypeScript", "RxJS", "SCSS", "HTML", "State Management", "WPF", "WinForms"]
     },
     {
       "name": "Architecture",
-      "skills": ["SOLID Principles", "Clean Architecture", "Design Patterns", "Microservices"]
+      "skills": ["SOLID Principles", "Clean Architecture", "Vertical Slice Architecture", "Design Patterns", "Microservices", "REST", "Monoliths", "Performance Optimization", "Scalability", "Maintainability"]
     },
     {
       "name": "DevOps & Cloud",
-      "skills": ["CI/CD Pipelines", "Docker", "Kubernetes", "Azure", "Google Cloud"]
+      "skills": ["CI/CD Pipelines", "Jenkins", "Azure DevOps", "Docker", "Kubernetes", "Helm", "Azure", "Google Cloud", "Git", "GitHub", "Gitlab", "Bitbucket"]
     }
   ]
 }

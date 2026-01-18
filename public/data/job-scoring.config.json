@@ -1,0 +1,62 @@
+{
+  "similarityThresholds": {
+    "strong": 0.85,
+    "moderate": 0.7
+  },
+  "skills": {
+    "required": {
+      "matchBase": 10,
+      "inProjectsBonus": 5,
+      "expertBonus": 5,
+      "missingPenalty": 25,
+      "maxPoints": 15
+    },
+    "niceToHave": {
+      "matchBase": 5,
+      "missingPenalty": 0,
+      "maxPoints": 5
+    },
+    "expertProjectThreshold": 3
+  },
+  "experience": {
+    "maxScore": 20,
+    "pointPerYear": 2,
+    "penaltyPerMissingYear": 5
+  },
+  "responsibilities": {
+    "keywordMatchScore": 2
+  },
+  "conclusions": {
+    "overrides": [
+      {
+        "metric": "reqCoverage",
+        "threshold": 90,
+        "message": "High Potential Match. Candidate possesses the majority of required technical skills, significantly offsetting other gaps."
+      },
+      {
+        "metric": "reqCoverage",
+        "threshold": 75,
+        "message": "Qualified Match. Good alignment with core technical stack. Gaps may be seniority-related or domain-specific."
+      }
+    ],
+    "tiers": [
+      {
+        "threshold": 90,
+        "message": "Exceptional fit. The candidate's profile strongly aligns with the core requirements."
+      },
+      {
+        "threshold": 75,
+        "message": "Strong technical fit with identifiable and learnable gaps."
+      },
+      {
+        "threshold": 50,
+        "message": "Moderate fit. Some foundational skills are present, but specific gaps exist."
+      },
+      {
+        "threshold": 30,
+        "message": "Partial Match. Candidate shares significant stack overlap but may require upskilling in key areas."
+      }
+    ],
+    "defaultMessage": "Low match probability. Critical mismatch in core technology stack (e.g. Missing primary language or framework)."
+  }
+}
