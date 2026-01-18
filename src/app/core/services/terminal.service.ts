@@ -108,6 +108,7 @@ export class TerminalService {
     this.register(config[TerminalCommandId.Info], (args) => this.handleInfo(args));
     this.register(config[TerminalCommandId.Ai], (args) => this.handleAi(args));
     this.register(config[TerminalCommandId.Fit], (args) => this.handleFit(args));
+    this.register(config[TerminalCommandId.Resume], () => this.handleResume());
   }
 
   private register(def: CommandDefinition, action: (args: string[]) => void | Promise<void>): void {
@@ -240,6 +241,23 @@ export class TerminalService {
       }
     } catch (e) {
       this.log('error', 'Analysis Error: ' + e);
+    }
+  }
+
+  private handleResume(): void {
+    this.log('system', 'Initiating resume download sequence...');
+    
+    try {
+      const link = document.createElement('a');
+      link.href = 'data/resume.pdf';
+      link.download = 'candidate_resume.pdf';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      this.log('system', 'Download started successfully.');
+    } catch (e) {
+      this.log('error', 'Download failed: ' + e);
     }
   }
 

@@ -5,7 +5,8 @@ export enum TerminalCommandId {
   Info = 'INFO',
   Kill = 'KILL',
   Ai = 'AI',
-  Fit = 'FIT'
+  Fit = 'FIT',
+  Resume = 'RESUME'
 }
 
 export type CommandCategory = 'portfolio' | 'system';
@@ -60,6 +61,11 @@ export const TERMINAL_CONFIG = {
     [TerminalCommandId.Fit]: {
       trigger: 'fit-analyze',
       description: 'Job Fit Analyzer. Usage: fit-analyze [job description text]',
+      category: 'portfolio'
+    },
+    [TerminalCommandId.Resume]: {
+      trigger: 'resume',
+      description: 'Downloads the resume file',
       category: 'portfolio'
     }
   } as Record<TerminalCommandId, CommandDefinition>,
