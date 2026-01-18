@@ -1,0 +1,40 @@
+.station-container {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    opacity: 0.8;
+}
+
+.station-svg {
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+    filter: drop-shadow(0 0 5px rgba(0, 243, 255, 0.2));
+}
+
+.rotating-assembly {
+    /* Very slow, deliberate rotation */
+    animation: station-spin 60s linear infinite;
+    transform-origin: 0 0;
+}
+
+.pulsing-core {
+    animation: core-pulse 4s ease-in-out infinite;
+}
+
+/* Subtle blinking lights on arrays */
+.solar-array {
+    transition: all 0.3s ease;
+}
+
+@keyframes station-spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+@keyframes core-pulse {
+    0%, 100% { opacity: 0.5; r: 4px; }
+    50% { opacity: 1; r: 5px; box-shadow: 0 0 10px var(--color-cyan); }
+}

@@ -13,10 +13,9 @@
     "location": "CZECH REPUBLIC",
     "avatarUrl": "assets/images/profile-avatar.svg",
     "stats": [
-      { "value": "10+", "label": "Years Exp." },
-      { "value": "100%", "label": "Code Quality" },
-      { "value": "24/7", "label": "Uptime" },
-      { "value": "24/7", "label": "Uptime" }
+      { "value": "12+", "label": "Years Exp." },
+      { "value": "Senior", "label": "Engineer Level" },
+      { "value": "Stack", "label": ".NET & Angular" }
     ]
   },
   "projects": [

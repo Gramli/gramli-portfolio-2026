@@ -1,0 +1,69 @@
+<div class="station-container">
+    <svg viewBox="-100 -100 200 200" class="station-svg">
+        <defs>
+            <filter id="tech-glow">
+                <feGaussianBlur stdDeviation="1.5" result="coloredBlur"/>
+                <feMerge>
+                    <feMergeNode in="coloredBlur"/>
+                    <feMergeNode in="SourceGraphic"/>
+                </feMerge>
+            </filter>
+            <linearGradient id="panel-grad" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" style="stop-color:var(--color-navy); stop-opacity:0.9" />
+                <stop offset="50%" style="stop-color:var(--color-cyan-dim); stop-opacity:0.3" />
+                <stop offset="100%" style="stop-color:var(--color-navy); stop-opacity:0.9" />
+            </linearGradient>
+        </defs>
+
+        <g class="rotating-assembly">
+            <!-- Main Truss Structure (Horizontal) -->
+            <line x1="-80" y1="0" x2="80" y2="0" stroke="var(--color-text-muted)" stroke-width="2" />
+            <line x1="-70" y1="-5" x2="70" y2="-5" stroke="var(--color-text-muted)" stroke-width="0.5" stroke-dasharray="2,2" />
+            <line x1="-70" y1="5" x2="70" y2="5" stroke="var(--color-text-muted)" stroke-width="0.5" stroke-dasharray="2,2" />
+
+            <!-- Solar Arrays (Left) -->
+            <g class="solar-array" transform="translate(-60, 0)">
+                <rect x="-15" y="-40" width="30" height="80" fill="url(#panel-grad)" stroke="var(--color-cyan-dim)" stroke-width="1" />
+                <line x1="0" y1="-40" x2="0" y2="40" stroke="var(--color-cyan-dim)" stroke-width="0.5" />
+                <line x1="-15" y1="-20" x2="15" y2="-20" stroke="var(--color-cyan-dim)" stroke-width="0.5" />
+                <line x1="-15" y1="20" x2="15" y2="20" stroke="var(--color-cyan-dim)" stroke-width="0.5" />
+            </g>
+
+             <g class="solar-array" transform="translate(-30, 0)">
+                <rect x="-10" y="-30" width="20" height="60" fill="url(#panel-grad)" stroke="var(--color-cyan-dim)" stroke-width="1" />
+            </g>
+
+
+            <!-- Solar Arrays (Right) -->
+            <g class="solar-array" transform="translate(60, 0)">
+                <rect x="-15" y="-40" width="30" height="80" fill="url(#panel-grad)" stroke="var(--color-cyan-dim)" stroke-width="1" />
+                <line x1="0" y1="-40" x2="0" y2="40" stroke="var(--color-cyan-dim)" stroke-width="0.5" />
+                <line x1="-15" y1="-20" x2="15" y2="-20" stroke="var(--color-cyan-dim)" stroke-width="0.5" />
+                <line x1="-15" y1="20" x2="15" y2="20" stroke="var(--color-cyan-dim)" stroke-width="0.5" />
+            </g>
+
+            <g class="solar-array" transform="translate(30, 0)">
+                <rect x="-10" y="-30" width="20" height="60" fill="url(#panel-grad)" stroke="var(--color-cyan-dim)" stroke-width="1" />
+            </g>
+
+
+            <!-- Central Core Modules (Vertical) -->
+            <g class="core-modules">
+                <!-- Node 1 -->
+                <circle cx="0" cy="0" r="12" fill="var(--color-bg-dark)" stroke="var(--color-cyan)" stroke-width="1.5" />
+                <circle cx="0" cy="0" r="4" fill="var(--color-cyan-bright)" class="pulsing-core" />
+                
+                <!-- Laboratory Module -->
+                <rect x="-8" y="12" width="16" height="25" rx="3" fill="var(--color-navy)" stroke="var(--color-text-muted)" stroke-width="1" />
+                
+                <!-- Docking Port -->
+                <rect x="-6" y="-30" width="12" height="18" rx="2" fill="var(--color-navy)" stroke="var(--color-text-muted)" stroke-width="1" />
+                <circle cx="0" cy="-25" r="2" fill="var(--color-cyan)" />
+            </g>
+
+            <!-- Radiators -->
+            <path d="M-20,10 L-25,25 L-40,20" fill="none" stroke="var(--color-text-muted)" stroke-width="1" />
+            <path d="M20,10 L25,25 L40,20" fill="none" stroke="var(--color-text-muted)" stroke-width="1" />
+        </g>
+    </svg>
+</div>

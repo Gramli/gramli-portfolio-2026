@@ -4,11 +4,12 @@ import { FormsModule } from '@angular/forms';
 import { PortfolioService } from '../../core/services/portfolio.service';
 import { Observable, firstValueFrom } from 'rxjs';
 import { Profile } from '../../core/models/portfolio.models';
+import { StationComponent } from '../../core/components/station/station.component';
 
 @Component({
   selector: 'app-contact',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, StationComponent],
   templateUrl: './contact.component.html',
   styleUrls: ['./contact.component.scss']
 })
