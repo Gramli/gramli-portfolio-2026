@@ -4,6 +4,6 @@ dist
 .github
 .angular
 .vscode
+proxy
 Dockerfile
-nginx.conf
 README.md
