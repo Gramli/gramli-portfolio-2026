@@ -2,15 +2,15 @@
   "profile": {
     "name": "Daniel Balcarek",
     "role": "Senior Software Engineer",
-    "shortBio": "Specializing in modern web applications using .NET Core and Angular.",
-    "longBio": "I am a Senior Software Engineer specializing in building modern web applications using .NET Core and Angular. I focus on solution architecture, design patterns, and SOLID principles to deliver applications that are maintainable, scalable, and easy to extend. My expertise spans backend development with C# and .NET Core, as well as frontend development with TypeScript and Angular.",
-    "philosophy": "As a software craftsman, I actively follow new trends and best practices. I place strong emphasis on code quality, testing, and optimal test coverage ensuring long-term reliability.",
+    "shortBio": "Specializing in modern web applications built with .NET and Angular.",
+    "longBio": "I am a Senior Software Engineer with a strong focus on building modern web applications using .NET and Angular. My work centers on solution architecture, design patterns, and SOLID principles, enabling the delivery of systems that are scalable, maintainable, and resilient. I bring hands-on experience across both backend development with C# and .NET and frontend development with TypeScript and Angular, supporting end-to-end ownership of solutions.",
+    "philosophy": "As a software craftsman, I actively follow new trends and industry best practices while carefully evaluating their real-world value. I place strong emphasis on clean code, clear architecture, and thoughtful design decisions. Code quality, automated testing, and optimal test coverage are central to my work, as they ensure long-term reliability, maintainability, and confidence when evolving systems over time.",
     "email": "contact@gramli.dev",
     "github": "https://github.com/gramli",
     "linkedin": "https://www.linkedin.com/in/daniel-balcarek/",
     "devto": "https://dev.to/gramli",
     "blog": "https://gramli.github.io/",
-    "location": "CZECH REPUBLIC",
+    "location": "Czech Republic",
     "avatarUrl": "assets/images/profile-avatar.svg",
     "stats": [
       { "value": "12+", "label": "Years Exp." },
@@ -21,68 +21,125 @@
   "projects": [
     {
       "id": "1",
-      "title": "Nebula Enterprise CRP",
-      "description": "Cloud-native resource planning system for inter-galactic trade.",
-      "problemStatement": "Legacy systems were unable to handle the scale of multi-planetary transactions.",
-      "solution": "Microservices architecture using .NET 8 and Azure Kubernetes Service.",
-      "technologies": [".NET Core", "Angular", "Azure", "Docker", "Redis"],
-      "role": "Lead Architect",
+      "title": "Transactional Business System",
+      "description": "A banking application for processing dividend payments.",
+      "problemStatement": "Legacy systems were unable to handle the required transaction scale. A modern and reliable solution was needed.",
+      "solution": "A monolithic architecture built with .NET 10 and deployed on Kubernetes.",
+      "technologies": ["C#", ".NET", "Dapper", "Angular", "TypeScript", "Docker", "Redis", "Kubernetes", "PostgreSQL", "Bitbucket", "Kafka", "Jenkins"],
+      "role": "Lead Software Engineer",
       "type": "commercial",
-      "status": "online",
-      "sourceUrl": "https://github.com/gramli/nebula-erp"
+      "status": "online"
     },
     {
       "id": "2",
-      "title": "Quasar Analytics",
-      "description": "Real-time telemetry processing engine.",
-      "problemStatement": "Need for sub-millisecond data processing from thousands of IoT sensors.",
-      "solution": "Event-driven architecture utilizing Apache Kafka and SignalR.",
-      "technologies": ["C#", "SignalR", "Kafka", "React", "TimescaleDB"],
-      "role": "Senior Backend Engineer",
-      "type": "personal",
-      "status": "in-development",
-      "sourceUrl": "https://github.com/gramli/quasar"
+      "title": "High-Performance Microservice",
+      "description": "A microservice designed to process a high volume of requests efficiently.",
+      "problemStatement": "The system required efficient handling of high request throughput.",
+      "solution": "Implemented as part of a larger microservices ecosystem with microfrontends.",
+      "technologies": ["C#", ".NET", "Microsoft SQL Server", "React", "TypeScript", "Azure", "Docker", "Kubernetes", "GitLab", "JMeter"],
+      "role": "Senior Software Engineer",
+      "type": "commercial",
+      "status": "online"
     },
     {
       "id": "3",
-      "title": "Droid Command Center",
-      "description": "Fleet management interface for autonomous units.",
-      "problemStatement": "Operators lacked a unified view of deployed units.",
-      "solution": "SPA with complex state management using NgRx.",
-      "technologies": ["Angular", "NgRx", "TypeScript", "RxJS", "Material"],
-      "role": "Frontend Lead",
+      "title": "Energy Business Platform",
+      "description": "A platform for managing clients in the energy sector.",
+      "problemStatement": "An outdated platform was limiting further business growth.",
+      "solution": "A complete rewrite using modern technologies and architectural principles.",
+      "technologies": ["C#", "AngularJS", "JavaScript", ".NET", "Oracle", "Entity Framework", "Azure DevOps", "RabbitMQ"],
+      "role": "Senior Software Engineer",
       "type": "commercial",
-      "status": "archived",
-      "sourceUrl": "https://github.com/gramli/droid-cmd"
+      "status": "archived"
     },
     {
       "id": "4",
-      "title": "Droid Command Center",
-      "description": "Fleet management interface for autonomous units.",
-      "problemStatement": "Operators lacked a unified view of deployed units.",
-      "solution": "SPA with complex state management using NgRx.",
-      "technologies": ["Angular", "NgRx", "TypeScript", "RxJS", "Material"],
-      "role": "Frontend Lead",
+      "title": "GPS Navigation System",
+      "description": "A navigation system designed for autonomous vehicles.",
+      "problemStatement": "The need for reliable navigation in controlled and specific environments.",
+      "solution": "A client-server application with a WPF frontend and WCF-based services.",
+      "technologies": ["C#", "WPF", "WCF", ".NET Framework", "MySQL", "SVN", "C++", "SOAP"],
+      "role": "Software Engineer",
+      "type": "commercial",
+      "status": "online"
+    },
+    {
+      "id": "5",
+      "title": "Authentication Example – AuthApi",
+      "description": "A full-stack example application demonstrating authentication and authorization.",
+      "problemStatement": "The need for a clear and practical example showcasing authentication techniques.",
+      "solution": "A full-stack solution with an Angular frontend and a .NET Minimal API backend implementing JWT and Basic authentication.",
+      "technologies": ["C#", "Angular", "TypeScript", ".NET", "Entity Framework", "JWT", "GitHub"],
+      "role": "Senior Software Engineer",
       "type": "personal",
-      "status": "archived"
+      "status": "in-development",
+      "sourceUrl": "https://github.com/Gramli/AuthApi"
+    },
+    {
+      "id": "6",
+      "title": "Vertical Slice Architecture – WeatherApi",
+      "description": "A REST API for managing weather data built with Minimal API and Vertical Slice Architecture.",
+      "problemStatement": "The need for a practical example demonstrating Vertical Slice Architecture and design patterns.",
+      "solution": "A REST API built with .NET Minimal API, showcasing CQRS, repository patterns, and vertical slices.",
+      "technologies": ["C#", ".NET", "Entity Framework", "GitHub", "Azure"],
+      "role": "Senior Software Engineer",
+      "type": "personal",
+      "status": "online",
+      "sourceUrl": "https://github.com/Gramli/WeatherApi-VSA"
+    },
+    {
+      "id": "7",
+      "title": "Clean Architecture – FileApi",
+      "description": "A full-stack example application for file upload and download using Minimal API.",
+      "problemStatement": "The need for a reference project demonstrating Clean Architecture principles.",
+      "solution": "A REST API built with .NET Minimal API following Clean Architecture, with a focus on file handling.",
+      "technologies": ["C#", ".NET", "Entity Framework", "GitHub", "Angular", "TypeScript"],
+      "role": "Senior Software Engineer",
+      "type": "personal",
+      "status": "in-development",
+      "sourceUrl": "https://github.com/Gramli/FileApi"
+    },
+    {
+      "id": "8",
+      "title": "angular-notifier",
+      "description": "A well-designed, fully animated, highly customizable notification library for Angular applications.",
+      "problemStatement": "The need for an easy-to-use and flexible notification solution.",
+      "solution": "A lightweight and customizable notification library for Angular.",
+      "technologies": ["Angular", "TypeScript"],
+      "role": "Maintainer",
+      "type": "personal",
+      "status": "online",
+      "sourceUrl": "https://github.com/Gramli/angular-notifier"
+    },
+    {
+      "id": "9",
+      "title": "angular-mydatepicker",
+      "description": "A lightweight and customizable Angular date picker and date-range picker with minimal dependencies.",
+      "problemStatement": "The need for a flexible and easy-to-use date picker solution.",
+      "solution": "A highly configurable Angular date picker and date-range picker with no external dependencies.",
+      "technologies": ["Angular", "TypeScript"],
+      "role": "Maintainer",
+      "type": "personal",
+      "status": "online",
+      "sourceUrl": "https://github.com/Gramli/angular-mydatepicker"
     }
   ],
   "skills": [
     {
       "name": "Backend",
-      "skills": [".NET", "ASP.NET", "C#", "REST APIs", "SQL", "PostgreSQL", "Microsoft SQL Server", "Oracle", "Entity Framework"]
+      "skills": [".NET", "ASP.NET", "C#", "REST APIs", "SQL", "PostgreSQL", "Dapper", "Microsoft SQL Server", "Oracle", "Entity Framework", "xUnit", "Moq", "WCF"]
     },
     {
       "name": "Frontend",
-      "skills": ["Angular", "TypeScript", "RxJS", "SCSS", "HTML", "State Management", "WPF", "WinForms"]
+      "skills": ["Angular", "TypeScript", "RxJS", "SCSS", "HTML", "JavaScript", "React", "WPF", "WinForms", "Avalonia"]
     },
     {
       "name": "Architecture",
-      "skills": ["SOLID Principles", "Clean Architecture", "Vertical Slice Architecture", "Design Patterns", "Microservices", "REST", "Monoliths", "Performance Optimization", "Scalability", "Maintainability"]
+      "skills": ["SOLID Principles", "Clean Architecture", "Vertical Slice Architecture", "Design Patterns", "Microservices", "REST", "Monoliths", "Performance Optimization", "Scalability", "Maintainability", "Integration Testing", "Unit Testing", "TDD", "Performance Testing"]
     },
     {
       "name": "DevOps & Cloud",
-      "skills": ["CI/CD Pipelines", "Jenkins", "Azure DevOps", "Docker", "Kubernetes", "Helm", "Azure", "Google Cloud", "Git", "GitHub", "Gitlab", "Bitbucket"]
+      "skills": ["CI/CD Pipelines", "Jenkins", "Azure DevOps", "Docker", "Kubernetes", "Helm", "Azure", "Google Cloud", "Git", "GitHub", "GitLab", "Bitbucket"]
     }
   ]
 }
