@@ -21,7 +21,6 @@ export class TerminalService {
 
   private readonly commandHistory: string[] = [];
   private readonly commands = new Map<string, TerminalCommand>();
-  private readonly infoHandlers = new Map<string, () => Promise<string>>();
 
   private activeInputCallback: ((input: string) => void) | null = null;
 
@@ -82,7 +81,7 @@ export class TerminalService {
   }
 
   private initialize(): void {
-    this.registerInfoModules();
+    // this.registerInfoModules(); // REMOVED
     this.registerCommands();
     this.displayWelcomeMessage();
   }
@@ -107,7 +106,7 @@ export class TerminalService {
     this.register(config[TerminalCommandId.Exit], () => this.isOpen.set(false));
     this.register(config[TerminalCommandId.Kill], (args) => this.handleKill(args));
 
-    this.register(config[TerminalCommandId.Info], (args) => this.handleInfo(args));
+    this.register(config[TerminalCommandId.Plog], () => this.handlePlog());
     this.register(config[TerminalCommandId.Ai], (args) => this.handleAi(args));
     this.register(config[TerminalCommandId.Fit], (args) => this.handleFit(args));
     this.register(config[TerminalCommandId.Resume], () => this.handleResume());
@@ -188,6 +187,73 @@ export class TerminalService {
     window.location.reload();
   }
 
+  private async handlePlog(): Promise<void> {
+    const bootMessages = [
+      '[INFO] Boot sequence initialized',
+      '[INFO] Connecting to station logging server...',
+      '[OK] Connection established'
+    ];
+
+    for (const msg of bootMessages) {
+      await this.delay(500);
+      this.log('system', msg);
+    }
+
+    const projects = await firstValueFrom(this.portfolioService.getProjects());
+    const skills = await firstValueFrom(this.portfolioService.getSkills());
+    const profile = await firstValueFrom(this.portfolioService.getProfile());
+
+    const projectCount = projects.length;
+    const skillCount = skills.reduce((acc, curr) => acc + curr.skills.length, 0);
+    const activeStackCount = new Set(projects.flatMap(p => p.technologies)).size;
+
+    await this.delay(500);
+    this.log('system', `[INFO] Projects logs loaded: ${projectCount}`);
+    
+    await this.delay(500);
+    this.log('system', `[INFO] Skills logs loaded: ${skillCount}`);
+
+    await this.delay(500);
+    this.log('system', `[INFO] Active stack logs loaded: ${activeStackCount}`);
+
+    await this.delay(500);
+    this.log('system', '[OK] System Log operational');
+
+    await this.delay(500);
+
+    const entries: string[] = [];
+    entries.push(`[LOCATION] ${profile.location}`);
+    entries.push(`[PROFILE] ${profile.name} - ${profile.role}`);
+    entries.push(`[BIO] ${profile.longBio}`);
+    
+    projects.forEach(p => {
+        entries.push(`[PROJECT] ${p.title} - ${p.description} (Tech Stack: ${p.technologies.join(', ')})`);
+    });
+
+    skills.forEach(s => {
+        entries.push(`[SKILL] ${s.name} - ${s.skills.join(', ')}`);
+    });
+
+    for (const entry of entries) {
+        await this.delay(1000);
+        this.log('system', entry);
+    }
+
+    const closingMessages = [
+        { msg: '[OK] Portfolio data fully loaded.', type: 'system' },
+        { msg: '[WARN] Telemetry spike detected', type: 'system' },
+        { msg: '[WARN] Unusual activity in terminal subsystem', type: 'system' },
+        { msg: '[ERROR] System disrupted', type: 'error' },
+        { msg: '[CRITICAL] Terminal disconnected from logging server', type: 'error' }
+    ];
+
+    for (const item of closingMessages) {
+        await this.delay(500);
+        this.log(item.type as any, item.msg);
+    }
+  }
+
+  /*
   private async handleInfo(args: string[]): Promise<void> {
     const moduleName = args[0]?.toLowerCase().replace(/^--/, '');
 
@@ -205,6 +271,7 @@ export class TerminalService {
       );
     }
   }
+  */
 
   private async handleAi(args: string[]): Promise<void> {
     if (args.length === 0) {
@@ -291,32 +358,6 @@ export class TerminalService {
     }
   }
 
-  private registerInfoModules(): void {
-    this.registerInfoHandler('about', async () => {
-      const p = await firstValueFrom(this.portfolioService.getProfile());
-      return `IDENTITY: ${p.name}\nROLE: ${p.role}\nBIO: ${p.shortBio}`;
-    });
-
-    this.registerInfoHandler('projects', async () => {
-      const list = await firstValueFrom(this.portfolioService.getProjects());
-      return 'PROJECT_ARCHIVES:\n' + list.map((p, i) => `[${i + 1}] ${p.title}`).join('\n');
-    });
-
-    this.registerInfoHandler('skills', async () => {
-      const valid = await firstValueFrom(this.portfolioService.getSkills());
-      return 'SKILL_MATRIX:\n' + valid.map((c) => `${c.name}: ${c.skills.join(', ')}`).join('\n');
-    });
-
-    this.registerInfoHandler('contact', async () => {
-      const p = await firstValueFrom(this.portfolioService.getProfile());
-      return `EMAIL: ${p.email}\nLINKEDIN: ${p.linkedin}\nGITHUB: ${p.github}`;
-    });
-  }
-
-  private registerInfoHandler(key: string, handler: () => Promise<string>): void {
-    this.infoHandlers.set(key, handler);
-  }
-
   private downloadFile(filename: string, content: string): void {
     try {
       const blob = new Blob([content], { type: 'text/plain' });
@@ -330,5 +371,9 @@ export class TerminalService {
       console.error('Download failed', e);
       this.log('error', 'Download not supported in this environment.');
     }
+  }
+
+  private delay(ms: number): Promise<void> {
+    return new Promise((resolve) => setTimeout(resolve, ms));
   }
 }

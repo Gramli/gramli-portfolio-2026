@@ -2,7 +2,7 @@ export enum TerminalCommandId {
   Help = 'HELP',
   Clear = 'CLEAR',
   Exit = 'EXIT',
-  Info = 'INFO',
+  Plog = 'PLOG',
   Kill = 'KILL',
   Ai = 'AI',
   Fit = 'FIT',
@@ -43,9 +43,9 @@ export const TERMINAL_CONFIG = {
       description: 'Closes the terminal modal',
       category: 'system'
     },
-    [TerminalCommandId.Info]: {
-      trigger: 'info',
-      description: 'Access portfolio data modules like --projects, --skills, --about, --contact. Usage: info --projects',
+    [TerminalCommandId.Plog]: {
+      trigger: 'plog',
+      description: 'System log stream. Usage: plog',
       category: 'portfolio'
     },
     [TerminalCommandId.Kill]: {
