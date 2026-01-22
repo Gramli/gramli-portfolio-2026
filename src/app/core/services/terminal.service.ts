@@ -206,28 +206,28 @@ export class TerminalService {
 
     // 3. Boot Sequence Phase
     await this.runBootSequence([
-      '[INFO] Boot sequence initialized',
-      '[INFO] Connecting to station logging server...',
-      '[OK] Connection established',
+      this.stylize('[INFO] Boot sequence initialized'),
+      this.stylize('[INFO] Connecting to station logging server...'),
+      this.stylize('[OK] Connection established'),
     ]);
 
     // 4. Counts Display Phase
-    await this.logWithDelay(`[INFO] Projects logs loaded: ${projectCount}`, this.DELAY_BOOT);
-    await this.logWithDelay(`[INFO] Skills logs loaded: ${skillCount}`, this.DELAY_BOOT);
-    await this.logWithDelay(`[INFO] Active stack logs loaded: ${activeStackCount}`, this.DELAY_BOOT);
-    await this.logWithDelay('[OK] System Log operational', this.DELAY_BOOT);
+    await this.logWithDelay(this.stylize(`[INFO] Projects logs loaded: ${projectCount}`), this.DELAY_BOOT);
+    await this.logWithDelay(this.stylize(`[INFO] Skills logs loaded: ${skillCount}`), this.DELAY_BOOT);
+    await this.logWithDelay(this.stylize(`[INFO] Active stack logs loaded: ${activeStackCount}`), this.DELAY_BOOT);
+    await this.logWithDelay(this.stylize('[OK] System Log operational'), this.DELAY_BOOT);
 
     // 5. Stream Portfolio Data Phase
     await this.delay(this.DELAY_BOOT); // Initial pause before streaming
 
     const entries = [
-      `[LOCATION] ${profile.location}`,
-      `[PROFILE] ${profile.name} - ${profile.role}`,
-      `[BIO] ${profile.longBio}`,
+      this.stylize(`[LOCATION] ${profile.location}`),
+      this.stylize(`[PROFILE] ${profile.name} - ${profile.role}`),
+      this.stylize(`[BIO] ${profile.longBio}`),
       ...projects.map(
-        (p) => `[PROJECT] ${p.title} - ${p.description} (Tech Stack: ${p.technologies.join(', ')})`
+        (p) => this.stylize(`[PROJECT] ${p.title} - ${p.description} (Tech Stack: ${p.technologies.join(', ')})`)
       ),
-      ...skills.map((s) => `[SKILL] ${s.name} - ${s.skills.join(', ')}`),
+      ...skills.map((s) => this.stylize(`[SKILL] ${s.name} - ${s.skills.join(', ')}`)),
     ];
 
     for (const entry of entries) {
@@ -246,7 +246,7 @@ export class TerminalService {
 
     for (const item of closingMessages) {
       await this.delay(this.DELAY_BOOT);
-      this.log(item.type, item.msg);
+      this.log(item.type, this.stylize(item.msg));
     }
   }
 
@@ -333,6 +333,32 @@ export class TerminalService {
   }
 
   // --- Helper Methods ---
+
+  private stylize(text: string): string {
+    const styles: Record<string, string> = {
+      '[INFO]': 'color: var(--color-cyan)',
+      '[OK]': 'color: var(--color-green)',
+      '[WARN]': 'color: var(--color-alert)',
+      '[ERROR]': 'color: #ef5350',
+      '[CRITICAL]': 'color: #ff0000; font-weight: bold',
+      '[LOCATION]': 'color: #ce93d8',
+      '[PROFILE]': 'color: var(--color-cyan-bright); font-weight: bold',
+      '[BIO]': 'color: #90caf9',
+      '[PROJECT]': 'color: #ffcc80',
+      '[SKILL]': 'color: #a5d6a7',
+    };
+
+    let styledText = text;
+    // Iterate manually to ensure specific prefixes are matched
+    for (const key in styles) {
+      if (styledText.includes(key)) {
+        styledText = styledText.replace(key, `<span style="${styles[key]}">${key}</span>`);
+        // We assume only one prefix type per message for efficiency
+        break;
+      }
+    }
+    return styledText;
+  }
 
   private async promptToUser(message: string): Promise<string> {
     this.log('system', message);
