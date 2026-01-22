@@ -9,10 +9,12 @@
              <span class="decor">//</span> {{ cat.name }}
           </h3>
           <ul class="skill-list">
-             @for (skill of cat.skills; track skill) {
-             <li class="skill-item">
-                <span class="bullet">></span> {{ skill }}
-             </li>
+             @for (skill of cat.skills; track skill.name) {
+               @if (!skill.hidden) {
+                 <li class="skill-item">
+                    <span class="bullet">></span> {{ skill.name }}
+                 </li>
+               }
              }
           </ul>
         </div>

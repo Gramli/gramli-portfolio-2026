@@ -85,14 +85,40 @@ export class AiService {
       firstValueFrom(this.portfolioService.getSkills())
     ]);
 
-    return JSON.stringify({ profile, projects, skills });
+    const minimizedProfile = {
+      name: profile.name,
+      role: profile.role,
+      shortBio: profile.shortBio,
+      stats: profile.stats
+    };
+
+    const minimizedProjects = projects.map(p => ({
+      title: p.title,
+      description: p.description,
+      technologies: p.technologies,
+      role: p.role
+    }));
+
+    const minimizedSkills = skills.map(c => ({
+      name: c.name,
+      skills: c.skills.map(s => s.name)
+    }));
+
+    return JSON.stringify({ profile: minimizedProfile, projects: minimizedProjects, skills: minimizedSkills });
   }
 
   private extractResponseText(response: GeminiResponse): string {
     const text = response.candidates?.[0]?.content?.parts?.[0]?.text;
     
-    if (!text) {
-      throw new Error('Invalid AI Response Structure');
+    // Sometimes the model returns an empty text part but includes search/grounding metadata.
+    // In this specific mock/proxy setup, if we get empty text but a successful finishReason, 
+    // it likely means the model refused to answer or found no info, or the proxy response structure varies.
+    // However, looking at the user's log, it seems the model is returning "```\n" which is nearly empty code block.
+    // It's safer to return a fallback message if text is too short/empty.
+    if (!text || text.trim().length === 0 || text.trim() === '```') {
+      // If we have candidates but text is weird, it might be a safety filter or the model returning just formatting.
+      // But for this specific error "```\n", it looks like a hallucinated incomplete code block.
+       return "I processed your query, but the neural network returned an ambiguous response. Please try rephrasing.";
     }
     
     return text;

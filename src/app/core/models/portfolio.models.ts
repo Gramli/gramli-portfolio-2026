@@ -13,9 +13,14 @@ export interface Project {
   status: 'online' | 'offline' | 'archived' | 'in-development';
 }
 
+export interface SkillItem {
+  name: string;
+  hidden?: boolean;
+}
+
 export interface SkillCategory {
   name: string;
-  skills: string[];
+  skills: SkillItem[];
   icon?: string;
 }
 

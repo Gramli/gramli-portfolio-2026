@@ -121,7 +121,7 @@ export class JobAnalyzerService {
     // Flatten skills for O(1) lookups
     const allSkills = new Set<string>();
     skillCategories.forEach(cat => 
-      cat.skills.forEach(skill => allSkills.add(skill.toLowerCase()))
+      cat.skills.forEach(skill => allSkills.add(skill.name.toLowerCase()))
     );
 
     // Pre-process projects for text search

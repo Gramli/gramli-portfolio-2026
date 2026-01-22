@@ -201,7 +201,7 @@ export class TerminalService {
 
     // 2. Calculation Phase
     const projectCount = projects.length;
-    const skillCount = skills.reduce((acc, curr) => acc + curr.skills.length, 0);
+    const skillCount = skills.reduce((acc, curr) => acc + curr.skills.filter(s => !s.hidden).length, 0);
     const activeStackCount = new Set(projects.flatMap((p) => p.technologies)).size;
 
     // 3. Boot Sequence Phase
@@ -227,7 +227,7 @@ export class TerminalService {
       ...projects.map(
         (p) => this.stylize(`[PROJECT] ${p.title} - ${p.description} (Tech Stack: ${p.technologies.join(', ')})`)
       ),
-      ...skills.map((s) => this.stylize(`[SKILL] ${s.name} - ${s.skills.join(', ')}`)),
+      ...skills.map((s) => this.stylize(`[SKILL] ${s.name} - ${s.skills.filter(sk => !sk.hidden).map(sk => sk.name).join(', ')}`)),
     ];
 
     for (const entry of entries) {

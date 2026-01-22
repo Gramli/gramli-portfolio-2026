@@ -153,18 +153,32 @@ public class Function : IHttpFunction
 
   private static string GetSystemInstruction(AiProxyRequest request)
   {
-    // Security: System prompts are stored server-side to prevent prompt manipulation by the client.
     return request.Type?.ToLowerInvariant() switch
     {
-      "job-parse" => "You are a professional HR data extraction engine. " +
-                     "Analyze the provided Job Description text and extract a structured JSON representation including: " +
-                     "requiredSkills (string[]), niceToHaveSkills (string[]), yearsExperience (number), " +
-                     "keyResponsibilities (string[]), and industry domains (string[]). Output RAW JSON only.",
+      "job-parse" => "You are a professional HR data extraction engine.\n\n" +
+                     "Task: Extract structured data from the Job Description into a strict JSON format.\n\n" +
+                     "Output Schema:\n" +
+                     "{\n" +
+                     "  \"requiredSkills\": [\"string\"],\n" +
+                     "  \"niceToHaveSkills\": [\"string\"],\n" +
+                     "  \"yearsExperience\": numberOrNull,\n" +
+                     "  \"keyResponsibilities\": [\"string\"],\n" +
+                     "  \"industryDomains\": [\"string\"]\n" +
+                     "}\n\n" +
+                     "Strict Rules:\n" +
+                     "1. Extract ONLY explicitly stated requirements. Do NOT infer missing skills.\n" +
+                     "2. Return RAW JSON only. Do NOT use Markdown code blocks (```json).\n" +
+                     "3. If a field is not found, return null or [].\n" +
+                     "4. Ensure valid JSON syntax.",
 
-      "chat" => $"You are a sophisticated Portfolio AI Assistant. " +
-                $"Current Session Context: {request.ContextData ?? "General"}. " +
-                "Keep responses professional and precise. Use Google Search for real-time validation. " +
-                "If specific data is unavailable, state: 'Data segment not found in archives.'",
+      "chat" => "You are the AI interface for Daniel Balcarek's portfolio.\n" +
+                "Directive: Answer visitor queries using ONLY the provided context.\n\n" +
+                "Rules:\n" +
+                "1. Use ONLY the data in [CONTEXT]. Do not use external knowledge.\n" +
+                "2. If the answer is not in [CONTEXT], reply exactly: 'Data segment not found in archives.'\n" +
+                "3. Keep answers concise (max 2-3 sentences) and professional.\n" +
+                "4. Do not make up facts.\n\n" +
+                $"[CONTEXT]\n{request.ContextData ?? "{}"}\n[END CONTEXT]",
 
       _ => "You are a helpful AI assistant."
     };

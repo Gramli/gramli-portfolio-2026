@@ -125,33 +125,86 @@
     }
   ],
   "skills": [
-        {
+    {
       "name": "Leadership",
       "skills": [
-          "Design modular, maintainable software architectures",
-          "Lead feature and epic design discussions",
-          "Drive key technical decisions",
-          "Resolve complex technical ambiguities",
-          "Deliver clear, actionable code reviews",
-          "Reduce technical debt",
-          "Mentor junior/medior engineers"
-        ]
+        { "name": "Design modular, maintainable software architectures" },
+        { "name": "Lead feature and epic design discussions" },
+        { "name": "Drive key technical decisions" },
+        { "name": "Resolve complex technical ambiguities" },
+        { "name": "Deliver clear, actionable code reviews" },
+        { "name": "Reduce technical debt" },
+        { "name": "Mentor junior/medior engineers" }
+      ]
     },
     {
       "name": "Architecture",
-      "skills": ["SOLID Principles", "Clean Architecture", "Vertical Slice Architecture", "Design Patterns", "Microservices", "REST", "Monoliths", "Performance Optimization", "Scalability", "Maintainability", "Integration Testing", "Unit Testing", "TDD", "Performance Testing"]
+      "skills": [
+        { "name": "SOLID Principles" },
+        { "name": "Clean Architecture" },
+        { "name": "Vertical Slice Architecture" },
+        { "name": "Design Patterns" },
+        { "name": "Microservices" },
+        { "name": "Monoliths" },
+        { "name": "Performance Optimization" },
+        { "name": "Scalability" },
+        { "name": "Maintainability" },
+        { "name": "Integration Testing", "hidden": true },
+        { "name": "Unit Testing", "hidden": true },
+        { "name": "Performance Testing", "hidden": true }
+      ]
     },
     {
       "name": "Backend",
-      "skills": [".NET", "ASP.NET", "C#", "REST APIs", "SQL", "PostgreSQL", "Dapper", "Microsoft SQL Server", "Oracle", "Entity Framework", "xUnit", "Moq", "WCF"]
+      "skills": [
+        { "name": ".NET" },
+        { "name": "ASP.NET" },
+        { "name": "C#" },
+        { "name": "REST APIs" },
+        { "name": "SQL" },
+        { "name": "PostgreSQL" },
+        { "name": "Dapper" },
+        { "name": "Microsoft SQL Server", "hidden": true },
+        { "name": "MySQL", "hidden": true },
+        { "name": "Oracle" },
+        { "name": "Entity Framework" },
+        { "name": "xUnit", "hidden": true },
+        { "name": "Moq", "hidden": true },
+        { "name": "WCF", "hidden": true },
+        { "name": ".NET Framework", "hidden": true }
+      ]
     },
     {
       "name": "Frontend",
-      "skills": ["Angular", "TypeScript", "RxJS", "SCSS", "HTML", "JavaScript", "React", "WPF", "WinForms", "Avalonia"]
+      "skills": [
+        { "name": "Angular" },
+        { "name": "TypeScript" },
+        { "name": "RxJS", "hidden": true },
+        { "name": "SCSS" },
+        { "name": "HTML", "hidden": true },
+        { "name": "JavaScript" },
+        { "name": "React" },
+        { "name": "WPF", "hidden": true },
+        { "name": "WinForms", "hidden": true },
+        { "name": "Avalonia UI" }
+      ]
     },
     {
       "name": "DevOps & Cloud",
-      "skills": ["CI/CD Pipelines", "Jenkins", "Azure DevOps", "Docker", "Kubernetes", "Helm", "Azure", "Google Cloud", "Git", "GitHub", "GitLab", "Bitbucket"]
+      "skills": [
+        { "name": "CI/CD Pipelines" },
+        { "name": "Jenkins" },
+        { "name": "Azure DevOps" },
+        { "name": "Docker" },
+        { "name": "Kubernetes" },
+        { "name": "Helm", "hidden": true },
+        { "name": "Azure" },
+        { "name": "Google Cloud" },
+        { "name": "Git" },
+        { "name": "GitHub", "hidden": true },
+        { "name": "GitLab", "hidden": true },
+        { "name": "Bitbucket", "hidden": true }
+      ]
     }
   ]
 }
