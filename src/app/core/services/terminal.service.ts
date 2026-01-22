@@ -262,6 +262,11 @@ export class TerminalService {
     }
 
     const query = args.join(' ');
+    if (query.length > 250) {
+      this.log('error', 'Query exceeds maximum length of 250 characters.');
+      return;
+    }
+
     this.log(
       'system',
       'Processing query<span class="loading-dots"><span>.</span><span>.</span><span>.</span></span>'
