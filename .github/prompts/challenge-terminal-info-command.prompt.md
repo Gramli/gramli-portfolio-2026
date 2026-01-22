@@ -1,7 +1,7 @@
 ---
-title: "AI Terminal Feature – Portfolio Enhancement Prompt"
-model: "Gemini 3 Pro (Agent Mode)"
-purpose: "Refactor terminal info command for a developer portfolio"
+name: "AI Terminal Feature – Portfolio Enhancement Prompt"
+model: "Gemini 3 Pro (Preview)"
+description: "Refactor terminal info command for a developer portfolio"
 ---
 
 ## Role

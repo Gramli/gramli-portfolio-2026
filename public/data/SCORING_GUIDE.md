@@ -17,6 +17,11 @@ This section controls the "Fuzzy Matching" algorithm (Jaro-Winkler) used to dete
     *   Scores above this value are considered partial matches (70% credit).
     *   *Default:* `0.70`.
 
+**Word Boundary Inclusion:**
+Before running fuzzy matching, the system checks for containment logic to handle complex technical terms better.
+*   **Composite Terms (Strong Match):** If a skill in the portfolio *contains* the target requirement as a whole word (e.g., Portfolio has ".NET / C#" and JD asks for "C#"), it counts as a **Strong Match**.
+*   **Partial Overlap (Moderate Match):** If the JD requirement *contains* a portfolio skill (e.g., JD asks for "AWS Lambda" and Portfolio has "AWS"), it counts as a **Moderate Match** to acknowledge partial transferability.
+
 **Automatic Strictness for Short Words:**
 The system automatically enforces stricter rules for short keywords (≤ 4 chars) like "Java", "SQL", or "AWS" to prevent false positives.
 *   *Short Word Strong Threshold:* 0.95 (Requires near-perfect match).

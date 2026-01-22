@@ -17,7 +17,7 @@ import { Profile } from '../../models/portfolio.models';
 })
 export class TerminalComponent {
   @ViewChild('terminalBody') terminalBody!: ElementRef<HTMLDivElement>;
-  @ViewChild('commandInput') commandInput!: ElementRef<HTMLInputElement>;
+  @ViewChild('commandInput') commandInput!: ElementRef<HTMLTextAreaElement>;
 
   private readonly terminalService = inject(TerminalService);
   private readonly portfolioService = inject(PortfolioService);
@@ -51,11 +51,26 @@ export class TerminalComponent {
   execute(): void {
     this.terminalService.execute(this.currentCommand);
     this.currentCommand = '';
+    setTimeout(() => this.autoResize());
+  }
+
+  onEnter(event: Event): void {
+    event.preventDefault();
+    this.execute();
+  }
+
+  autoResize(): void {
+    const el = this.commandInput?.nativeElement;
+    if (el) {
+      el.style.height = 'auto';
+      el.style.height = el.scrollHeight + 'px';
+    }
   }
 
   navigateHistory(direction: 'up' | 'down', event: Event): void {
     event.preventDefault();
     this.currentCommand = this.terminalService.navigateHistory(direction);
+    setTimeout(() => this.autoResize());
     
     // Move cursor to end
     setTimeout(() => {
@@ -87,6 +102,8 @@ export class TerminalComponent {
         this.currentCommand.substring(0, start) + 
         text + 
         this.currentCommand.substring(end);
+
+      setTimeout(() => this.autoResize());
 
       setTimeout(() => {
         input.focus();

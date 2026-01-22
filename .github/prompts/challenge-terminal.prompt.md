@@ -1,7 +1,7 @@
 ---
-title: "AI Terminal Feature – Portfolio Enhancement Prompt"
-model: "Gemini 3 Pro (Agent Mode)"
-purpose: "Design and implement an interactive terminal feature for a developer portfolio"
+name: "AI Terminal Feature – Portfolio Enhancement Prompt"
+model: "Gemini 3 Pro (Preview)"
+description: "Design and implement an interactive terminal feature for a developer portfolio"
 ---
 
 ## Role
@@ -138,6 +138,7 @@ System failure - command not found
   - Accessibility
   - Performance
   - Error handling
+
 ### Output Expectations
 
 Produce:

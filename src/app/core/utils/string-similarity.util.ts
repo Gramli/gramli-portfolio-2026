@@ -84,6 +84,20 @@ export class StringSimilarity {
       return { found: true, matchedTerm: normalizedTarget, matchQuality: 'strong' };
     }
 
+    // 1.5 Word Boundary Inclusion
+    // Handles specific cases like "C#" inside ".NET/C#" or "AWS" inside "AWS Lambda"
+    for (const skill of available) {
+      // Check if skill contains the target (e.g. Target: "C#", Skill: ".NET / C#")
+      if (this.containsWord(skill, normalizedTarget)) {
+        return { found: true, matchedTerm: skill, matchQuality: 'strong' };
+      }
+      // Check if target contains the skill (e.g. Target: "AWS Lambda", Skill: "AWS")
+      // We consider this a 'moderate' match as it's a partial fulfillment
+      if (this.containsWord(normalizedTarget, skill)) {
+        return { found: true, matchedTerm: skill, matchQuality: 'moderate' };
+      }
+    }
+
     // 2. Fuzzy Match (O(N))
     let bestMatch: string | null = null;
     let bestScore = 0;
@@ -116,5 +130,13 @@ export class StringSimilarity {
     }
 
     return { found: false, matchQuality: 'weak' };
+  }
+
+  private static containsWord(text: string, word: string): boolean {
+    // Escape special regex characters
+    const escaped = word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    // Match word boundary: start/end of string OR non-alphanumeric character
+    const regex = new RegExp(`(?:^|[^a-z0-9])${escaped}(?:$|[^a-z0-9])`, 'i');
+    return regex.test(text);
   }
 }

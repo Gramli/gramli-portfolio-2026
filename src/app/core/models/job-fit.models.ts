@@ -15,14 +15,14 @@ export interface SkillMatch {
 }
 
 export interface FitAnalysisResult {
-  score: number; // 0-100
-  requiredSkillsCoverage: number; // percentage
-  niceToHaveSkillsCoverage: number; // percentage
+  score: number;
+  requiredSkillsCoverage: number; 
+  niceToHaveSkillsCoverage: number;
   requiredMatches: SkillMatch[];
   niceToHaveMatches: SkillMatch[];
   experienceMatch: {
     required: number;
-    actual: number; // This needs to be calculated/estimated from portfolio data
+    actual: number;
     score: number;
   };
   projectRelevance: {

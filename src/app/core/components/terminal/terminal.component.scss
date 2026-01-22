@@ -172,7 +172,7 @@
     flex-shrink: 0;
   }
 
-  input {
+  textarea {
     flex: 1;
     background: transparent;
     border: none;
@@ -181,6 +181,8 @@
     font-size: inherit;
     outline: none;
     padding: 0;
+    resize: none;
+    overflow: hidden;
     
     /* Blinking Cursor Simulation handled by browser native input usually, but we keep it simple */
     caret-color: var(--color-green);

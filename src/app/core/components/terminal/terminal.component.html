@@ -38,17 +38,18 @@
       <!-- Input Line -->
       <div class="input-line">
         <span class="prompt">guest@portfolio:~$</span>
-        <input 
+        <textarea 
           #commandInput
-          type="text" 
           [(ngModel)]="currentCommand" 
-          (keydown.enter)="execute()"
+          (keydown.enter)="onEnter($event)"
           (keydown.arrowup)="navigateHistory('up', $event)"
           (keydown.arrowdown)="navigateHistory('down', $event)"
+          (input)="autoResize()"
+          rows="1"
           autofocus
           spellcheck="false"
           autocomplete="off"
-        >
+        ></textarea>
       </div>
     </div>
 
