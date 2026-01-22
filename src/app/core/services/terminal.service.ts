@@ -19,6 +19,11 @@ export class TerminalService {
   public readonly logs = signal<TerminalLog[]>([]);
   public readonly historyIndex = signal<number>(-1);
 
+  // Constants to avoid magic numbers
+  private readonly DELAY_BOOT = 500;
+  private readonly DELAY_LOG_ENTRY = 1000;
+  private readonly RESUME_FILE_PATH = 'data/resume.pdf';
+
   private readonly commandHistory: string[] = [];
   private readonly commands = new Map<string, TerminalCommand>();
 
@@ -27,7 +32,7 @@ export class TerminalService {
   constructor(
     private readonly portfolioService: PortfolioService,
     private readonly aiService: AiService,
-    private readonly jobAnalyzer: JobAnalyzerService,
+    private readonly jobAnalyzer: JobAnalyzerService
   ) {
     this.initialize();
   }
@@ -54,9 +59,11 @@ export class TerminalService {
 
     this.log('input', rawInput);
 
+    // If waiting for user input, resolve the callback with valid input
     if (this.activeInputCallback) {
-      this.activeInputCallback(input);
+      const callback = this.activeInputCallback;
       this.activeInputCallback = null;
+      callback(input);
       return;
     }
 
@@ -80,8 +87,9 @@ export class TerminalService {
     return this.commandHistory[newIdx] || '';
   }
 
+  // --- Initialization ---
+
   private initialize(): void {
-    // this.registerInfoModules(); // REMOVED
     this.registerCommands();
     this.displayWelcomeMessage();
   }
@@ -136,51 +144,47 @@ export class TerminalService {
     }
   }
 
-  private async promptToUser(message: string): Promise<string> {
-    this.log('system', message);
-    return new Promise<string>((resolve) => {
-      this.activeInputCallback = resolve;
-    });
-  }
+  // --- Command Handlers ---
 
   private handleHelp(): void {
-    const all = Array.from(this.commands.values());
-    const group = (category: CommandCategory) => all.filter((c) => c.category === category);
+    const allCommands = Array.from(this.commands.values());
+    const portfolioCommands = allCommands.filter((c) => c.category === 'portfolio');
+    const systemCommands = allCommands.filter((c) => c.category === 'system');
 
-    const format = (list: TerminalCommand[]) =>
+    const generateTable = (commands: TerminalCommand[]): string =>
       `<table style="width: 100%; border-collapse: collapse;">
-        ${list
-          .map(
-            (c) => `
-          <tr>
-            <td style="white-space: nowrap; width: 140px; vertical-align: top; color: var(--color-cyan-bright); padding-bottom: 4px;">${c.command}</td>
-            <td style="vertical-align: top; padding-bottom: 4px; color: var(--color-text-main);">${c.description}</td>
-          </tr>
-        `,
-          )
-          .join('')}
+        ${commands.map(this.formatHelpRow).join('')}
       </table>`;
 
     const output = [
       '<div>Available Commands:</div>',
       '<div style="color: var(--color-text-muted); font-weight: bold; margin: 10px 0 5px 0;">PORTFOLIO COMMANDS:</div>',
-      format(group('portfolio')),
+      generateTable(portfolioCommands),
       '<div style="color: var(--color-text-muted); font-weight: bold; margin: 15px 0 5px 0;">SYSTEM COMMANDS:</div>',
-      format(group('system')),
+      generateTable(systemCommands),
     ].join('');
 
     this.log('output', output);
   }
 
+  private formatHelpRow(cmd: TerminalCommand): string {
+    return `
+      <tr>
+        <td style="white-space: nowrap; width: 140px; vertical-align: top; color: var(--color-cyan-bright); padding-bottom: 4px;">${cmd.command}</td>
+        <td style="vertical-align: top; padding-bottom: 4px; color: var(--color-text-main);">${cmd.description}</td>
+      </tr>`;
+  }
+
   private async handleKill(args: string[]): Promise<void> {
-    const secondsArg = args[0] === '--seconds' && args[1] ? parseInt(args[1], 10) : 3;
-    let seconds = secondsArg || 3;
+    const defaultSeconds = 3;
+    const secondsArg = args[0] === '--seconds' && args[1] ? parseInt(args[1], 10) : defaultSeconds;
+    let seconds = isNaN(secondsArg) ? defaultSeconds : secondsArg;
 
     this.log('system', 'System shutdown initiated...');
 
     while (seconds > 0) {
       this.log('system', `Reboot in ${seconds}...`);
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      await this.delay(1000); // 1 second countdown
       seconds--;
     }
 
@@ -188,90 +192,63 @@ export class TerminalService {
   }
 
   private async handlePlog(): Promise<void> {
-    const bootMessages = [
-      '[INFO] Boot sequence initialized',
-      '[INFO] Connecting to station logging server...',
-      '[OK] Connection established'
-    ];
+    // 1. Data Fetching Phase (Parallel)
+    const [projects, skills, profile] = await Promise.all([
+      firstValueFrom(this.portfolioService.getProjects()),
+      firstValueFrom(this.portfolioService.getSkills()),
+      firstValueFrom(this.portfolioService.getProfile()),
+    ]);
 
-    for (const msg of bootMessages) {
-      await this.delay(500);
-      this.log('system', msg);
-    }
-
-    const projects = await firstValueFrom(this.portfolioService.getProjects());
-    const skills = await firstValueFrom(this.portfolioService.getSkills());
-    const profile = await firstValueFrom(this.portfolioService.getProfile());
-
+    // 2. Calculation Phase
     const projectCount = projects.length;
     const skillCount = skills.reduce((acc, curr) => acc + curr.skills.length, 0);
-    const activeStackCount = new Set(projects.flatMap(p => p.technologies)).size;
+    const activeStackCount = new Set(projects.flatMap((p) => p.technologies)).size;
 
-    await this.delay(500);
-    this.log('system', `[INFO] Projects logs loaded: ${projectCount}`);
-    
-    await this.delay(500);
-    this.log('system', `[INFO] Skills logs loaded: ${skillCount}`);
+    // 3. Boot Sequence Phase
+    await this.runBootSequence([
+      '[INFO] Boot sequence initialized',
+      '[INFO] Connecting to station logging server...',
+      '[OK] Connection established',
+    ]);
 
-    await this.delay(500);
-    this.log('system', `[INFO] Active stack logs loaded: ${activeStackCount}`);
+    // 4. Counts Display Phase
+    await this.logWithDelay(`[INFO] Projects logs loaded: ${projectCount}`, this.DELAY_BOOT);
+    await this.logWithDelay(`[INFO] Skills logs loaded: ${skillCount}`, this.DELAY_BOOT);
+    await this.logWithDelay(`[INFO] Active stack logs loaded: ${activeStackCount}`, this.DELAY_BOOT);
+    await this.logWithDelay('[OK] System Log operational', this.DELAY_BOOT);
 
-    await this.delay(500);
-    this.log('system', '[OK] System Log operational');
+    // 5. Stream Portfolio Data Phase
+    await this.delay(this.DELAY_BOOT); // Initial pause before streaming
 
-    await this.delay(500);
-
-    const entries: string[] = [];
-    entries.push(`[LOCATION] ${profile.location}`);
-    entries.push(`[PROFILE] ${profile.name} - ${profile.role}`);
-    entries.push(`[BIO] ${profile.longBio}`);
-    
-    projects.forEach(p => {
-        entries.push(`[PROJECT] ${p.title} - ${p.description} (Tech Stack: ${p.technologies.join(', ')})`);
-    });
-
-    skills.forEach(s => {
-        entries.push(`[SKILL] ${s.name} - ${s.skills.join(', ')}`);
-    });
+    const entries = [
+      `[LOCATION] ${profile.location}`,
+      `[PROFILE] ${profile.name} - ${profile.role}`,
+      `[BIO] ${profile.longBio}`,
+      ...projects.map(
+        (p) => `[PROJECT] ${p.title} - ${p.description} (Tech Stack: ${p.technologies.join(', ')})`
+      ),
+      ...skills.map((s) => `[SKILL] ${s.name} - ${s.skills.join(', ')}`),
+    ];
 
     for (const entry of entries) {
-        await this.delay(1000);
-        this.log('system', entry);
+      await this.delay(this.DELAY_LOG_ENTRY);
+      this.log('system', entry);
     }
 
+    // 6. Shutdown/End Sequence Phase
     const closingMessages = [
-        { msg: '[OK] Portfolio data fully loaded.', type: 'system' },
-        { msg: '[WARN] Telemetry spike detected', type: 'system' },
-        { msg: '[WARN] Unusual activity in terminal subsystem', type: 'system' },
-        { msg: '[ERROR] System disrupted', type: 'error' },
-        { msg: '[CRITICAL] Terminal disconnected from logging server', type: 'error' }
+      { msg: '[OK] Portfolio data fully loaded.', type: 'system' as const },
+      { msg: '[WARN] Telemetry spike detected', type: 'system' as const },
+      { msg: '[WARN] Unusual activity in terminal subsystem', type: 'system' as const },
+      { msg: '[ERROR] System disrupted', type: 'error' as const },
+      { msg: '[CRITICAL] Terminal disconnected from logging server', type: 'error' as const },
     ];
 
     for (const item of closingMessages) {
-        await this.delay(500);
-        this.log(item.type as any, item.msg);
+      await this.delay(this.DELAY_BOOT);
+      this.log(item.type, item.msg);
     }
   }
-
-  /*
-  private async handleInfo(args: string[]): Promise<void> {
-    const moduleName = args[0]?.toLowerCase().replace(/^--/, '');
-
-    if (moduleName && this.infoHandlers.has(moduleName)) {
-      const handler = this.infoHandlers.get(moduleName)!;
-      const data = await handler();
-      this.log('output', data);
-    } else {
-      const list = Array.from(this.infoHandlers.keys())
-        .map((k) => `--${k}`)
-        .join(', ');
-      this.log(
-        'error',
-        `${TERMINAL_CONFIG.messages.usagePrefix}info --<module>\nAvailable: ${list}`,
-      );
-    }
-  }
-  */
 
   private async handleAi(args: string[]): Promise<void> {
     if (args.length === 0) {
@@ -287,16 +264,17 @@ export class TerminalService {
     const query = args.join(' ');
     this.log(
       'system',
-      'Processing query<span class="loading-dots"><span>.</span><span>.</span><span>.</span></span>',
+      'Processing query<span class="loading-dots"><span>.</span><span>.</span><span>.</span></span>'
     );
 
     try {
       const response = await this.aiService.processQuery(query);
       this.updateLastLog('Processing query... ' + TERMINAL_CONFIG.messages.done);
       this.log('ai', response);
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : String(err);
       this.updateLastLog('Processing query... ' + TERMINAL_CONFIG.messages.failed);
-      this.log('error', `AI Error: ${err.message || err}`);
+      this.log('error', `AI Error: ${errorMessage}`);
     }
   }
 
@@ -304,7 +282,7 @@ export class TerminalService {
     if (args.length === 0) {
       this.log(
         'error',
-        `${TERMINAL_CONFIG.messages.usagePrefix}fit-analyze <job description text>`,
+        `${TERMINAL_CONFIG.messages.usagePrefix}fit-analyze <job description text>`
       );
       return;
     }
@@ -313,7 +291,7 @@ export class TerminalService {
 
     this.log(
       'system',
-      'Analyzing data<span class="loading-dots"><span>.</span><span>.</span><span>.</span></span>',
+      'Analyzing data<span class="loading-dots"><span>.</span><span>.</span><span>.</span></span>'
     );
     try {
       const result = await this.jobAnalyzer.analyze(jdText);
@@ -330,14 +308,15 @@ export class TerminalService {
 
       const exportAnswer = await this.promptToUser('Do you want to export the result? (y/n)');
       if (exportAnswer.toLowerCase().startsWith('y')) {
-        this.downloadFile(
+        this.downloadTextFile(
           `fit_analysis_${new Date().toISOString().split('T')[0]}.txt`,
-          JSON.stringify(result, null, 2),
+          JSON.stringify(result, null, 2)
         );
         this.log('system', 'Report downloaded.');
       }
-    } catch (e) {
-      this.log('error', 'Analysis Error: ' + e);
+    } catch (e: unknown) {
+      const errorMessage = e instanceof Error ? e.message : String(e);
+      this.log('error', 'Analysis Error: ' + errorMessage);
     }
   }
 
@@ -345,27 +324,55 @@ export class TerminalService {
     this.log('system', 'Initiating resume download sequence...');
 
     try {
-      const link = document.createElement('a');
-      link.href = 'data/resume.pdf';
-      link.download = 'candidate_resume.pdf';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-
+      this.triggerFileDownload(this.RESUME_FILE_PATH, 'candidate_resume.pdf');
       this.log('system', 'Download started successfully.');
-    } catch (e) {
-      this.log('error', 'Download failed: ' + e);
+    } catch (e: unknown) {
+      const errorMessage = e instanceof Error ? e.message : String(e);
+      this.log('error', 'Download failed: ' + errorMessage);
     }
   }
 
-  private downloadFile(filename: string, content: string): void {
+  // --- Helper Methods ---
+
+  private async promptToUser(message: string): Promise<string> {
+    this.log('system', message);
+    return new Promise<string>((resolve) => {
+      this.activeInputCallback = resolve;
+    });
+  }
+
+  private async runBootSequence(messages: string[]): Promise<void> {
+    for (const msg of messages) {
+      await this.delay(this.DELAY_BOOT);
+      this.log('system', msg);
+    }
+  }
+
+  private async logWithDelay(message: string, delayMs: number): Promise<void> {
+    await this.delay(delayMs);
+    this.log('system', message);
+  }
+
+  /**
+   * Triggers a browser download for a specific existing file (e.g. PDF).
+   */
+  private triggerFileDownload(url: string, filename: string): void {
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }
+
+  /**
+   * Generates a blob and triggers download for generated text content.
+   */
+  private downloadTextFile(filename: string, content: string): void {
     try {
       const blob = new Blob([content], { type: 'text/plain' });
       const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = filename;
-      a.click();
+      this.triggerFileDownload(url, filename);
       window.URL.revokeObjectURL(url);
     } catch (e) {
       console.error('Download failed', e);

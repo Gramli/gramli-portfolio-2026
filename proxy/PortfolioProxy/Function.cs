@@ -43,7 +43,7 @@ public class Function : IHttpFunction
   private const string GeminiModel = "gemini-2.0-flash-lite";
   private const string GeminiBaseUrl = "https://generativelanguage.googleapis.com/v1beta/models";
 
-  private const long MaxRequestSize = 1024 * 1024;
+  private const long MaxRequestSize = 512 * 1024;
 
   public Function(IHttpClientFactory httpClientFactory, ILogger<Function> logger)
   {
